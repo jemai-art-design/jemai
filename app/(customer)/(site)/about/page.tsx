@@ -162,7 +162,7 @@ const AboutPage = () => (
           shape everyday experience.
         </p>
         <div className="mt-stack-default">
-          <Disciplines disciplines={disciplines} defaultOpen="furniture" />
+          <Disciplines disciplines={disciplines} defaultOpen="design" />
         </div>
       </div>
     </section>
