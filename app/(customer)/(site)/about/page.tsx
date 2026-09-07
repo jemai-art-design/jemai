@@ -53,11 +53,6 @@ const disciplines: Discipline[] = [
     title: "Art",
     body: "We present contemporary work for the perspective and presence it brings — pieces that hold a room rather than decorate it, chosen with the people who will live alongside them.",
   },
-  {
-    id: "exhibitions",
-    title: "Exhibitions",
-    body: "Our exhibitions bring artists, makers and collectors into the same room. Each one is staged in a space chosen for the work, and most travel on afterwards.",
-  },
 ];
 
 const AboutPage = () => (
@@ -143,7 +138,7 @@ const AboutPage = () => (
       heading="A Note From Our Founder"
       paragraphs={[
         "I have always believed that the spaces around us quietly influence how we feel, how we connect and how we imagine what comes next.",
-        "JEMAI grew from a desire to make those spaces more beautiful\u2014to bring Design, furniture and art into one conversation, and to create an experience that feels personal rather than prescriptive. We are not here to impose a finished look. We are here to listen, to recognise what matters to you and to help shape an environment that feels honest, expressive and enduring.",
+        "JEMAI grew from a desire to make those spaces more beautiful\u2014to bring Design, Furniture and Art into one conversation, and to create an experience that feels personal rather than prescriptive. We are not here to impose a finished look. We are here to listen, to recognise what matters to you and to help shape an environment that feels honest, expressive and enduring.",
       ]}
       closing="With warmth,"
       signature="Esther Akin-Ajayi"
@@ -153,11 +148,11 @@ const AboutPage = () => (
       }}
     />
 
-    {/* The four disciplines */}
+    {/* The three disciplines */}
     <section className="w-full px-4 sm:px-6 lg:px-page-gutter">
       <div className="mx-auto flex w-full max-w-200 flex-col">
         <p className="text-body-lg text-text-primary">
-          JEMAI works across four connected disciplines. Each can be experienced
+          JEMAI works across three connected disciplines. Each can be experienced
           individually, or brought together to shape one complete environment.
         </p>
         <p className="text-body text-text-secondary mt-stack-copy">

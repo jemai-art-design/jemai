@@ -274,7 +274,7 @@ export const sendSubscriptionWelcome = async (subscriber: { email: string; name:
       subscriber.name ? `Thank you for signing up, ${subscriber.name.split(" ")[0]}.` : "Thank you for signing up.",
       "You will hear from us when a new collection lands, a show opens, or a piece we are proud of leaves the workshop. Not often, and never noise.",
     ],
-    action: { label: "Browse the collection", url: url("/furniture") },
+    action: { label: "Visit our Website", url: url("/") },
     footnotes: ["Signed up by mistake? Reply to this message and we will take you off the list."],
   });
 

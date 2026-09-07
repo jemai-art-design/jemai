@@ -116,12 +116,12 @@ const ContactPage = () => (
           <p className="text-eyebrow text-text-secondary mt-7 uppercase">
             Neighborhood
           </p>
-          <p className="text-body-lg text-text-primary">Murray Hill</p>
+          <p className="text-body-lg text-text-primary">Hamza Sakwa Close</p>
 
           <p className="text-eyebrow text-text-secondary mt-4.75 uppercase">
             City
           </p>
-          <p className="text-body-lg text-text-primary">Lagos</p>
+          <p className="text-body-lg text-text-primary">Guzape,Abuja</p>
 
           <a
             href="https://maps.google.com/?q=Plot+1194,+Hamza+Sakwa+Close,+Guzape,+Abuja"
