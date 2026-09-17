@@ -9,6 +9,9 @@ type SectionIntroProps = {
   /** type/desktop/numeral/editorial — the oversized count some sections lead with. */
   numeral?: string;
   heading: ReactNode;
+  /** A band that opens a page carries its h1; a band inside one carries an h2. */
+  headingAs?: "h1" | "h2";
+  headingClassName?: string;
   copy: ReactNode;
   cta?: { label: string; href: string };
   secondaryCta?: { label: string; href: string };
@@ -19,6 +22,8 @@ export const SectionIntro = ({
   eyebrow,
   numeral,
   heading,
+  headingAs: Heading = "h2",
+  headingClassName,
   copy,
   cta,
   secondaryCta,
@@ -34,9 +39,14 @@ export const SectionIntro = ({
             {numeral}
           </span>
         )}
-        <h2 className="font-heading text-text-primary flex-1 text-3xl font-bold leading-tight sm:text-h2">
+        <Heading
+          className={cn(
+            "font-heading text-text-primary flex-1 text-3xl font-bold leading-tight sm:text-h2",
+            headingClassName,
+          )}
+        >
           {heading}
-        </h2>
+        </Heading>
       </div>
 
       <div className="flex flex-1 flex-col items-start gap-5">

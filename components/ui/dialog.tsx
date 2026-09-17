@@ -47,11 +47,15 @@ const DialogOverlay = ({
 
 const DialogContent = ({
   className,
+  /** The lightbox darkens its scrim past the 64% the modal frames draw. */
+  overlayClassName,
   children,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content>) => (
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  overlayClassName?: string;
+}) => (
   <DialogPortal>
-    <DialogOverlay />
+    <DialogOverlay className={overlayClassName} />
     <DialogPrimitive.Content
       data-slot="dialog-content"
       className={cn(

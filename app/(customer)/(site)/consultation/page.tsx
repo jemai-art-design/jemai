@@ -1,39 +1,13 @@
 import type { Metadata } from "next";
 import { FaqSection, type Faq } from "@/components/consultation/faq";
 import { InquiryForm } from "@/components/consultation/inquiry-form";
-import {
-  ProjectsRail,
-  type Project,
-} from "@/components/consultation/projects-rail";
+import { ArchitectureSection } from "@/components/site/architecture-section";
 
 export const metadata: Metadata = {
   title: "Consultation | JEMAI",
   description:
     "From private homes to public spaces, discover environments shaped around the people, purpose and possibilities within them.",
 };
-
-const projects: Project[] = [
-  {
-    src: "/figma/home/sp-lanier.jpg",
-    alt: "A marble hall with fluted columns and chandeliers",
-    caption: "Residential · Lagos",
-  },
-  {
-    src: "/figma/home/sp-soho.jpg",
-    alt: "A cast-iron building facade at dusk",
-    caption: "Hospitality · Lagos",
-  },
-  {
-    src: "/figma/home/sp-bathhouse.jpg",
-    alt: "A white loft with a low seating group",
-    caption: "Retail · Lagos",
-  },
-  {
-    src: "/figma/home/sp-woods.jpg",
-    alt: "A lit glass pavilion in snow at dusk",
-    caption: "Workplace · Abuja",
-  },
-];
 
 /** Copy comes straight from the client's FAQ document. */
 const faqs: Faq[] = [
@@ -98,18 +72,22 @@ const faqs: Faq[] = [
 
 const ConsultationPage = () => (
   <div className="flex w-full flex-col gap-16 pt-16">
-    <ProjectsRail
+    <ArchitectureSection
+      variant="page"
       eyebrow="JEMAI Designs"
-      heading={["Spaces Shaped by", "Purpose, &\u00a0 Personality"]}
-      copy="From private homes to public spaces, discover environments shaped around the people, purpose and possibilities within them."
-      projects={projects}
+      heading={
+        <>
+          <span className="block">Spaces Shaped by</span>
+          <span className="block">Purpose, &amp;&nbsp; Personality</span>
+        </>
+      }
     />
 
     <InquiryForm
       eyebrow="Inquire"
       heading="Tell us about your space"
       copy="Share a few essentials, and our team will be in touch to begin the conversation."
-      email="consultations@jemai.co"
+      email="admin@jemai.co"
     />
 
     <FaqSection

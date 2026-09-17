@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
       bodySizeLimit: `${MAX_IMAGE_SIZE_MB + 1}mb`,
     },
   },
+  allowedDevOrigins: ['192.168.1.114'],
   images: {
     remotePatterns: [
       {
