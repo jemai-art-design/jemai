@@ -101,15 +101,15 @@ export const spaces: Space[] = [
     ],
   },
   {
-    name: "Lendo",
+    name: "Lenido",
     meta: "Hospitality · Lagos",
     summary: "",
     description:
       "A thoughtfully designed reception for LENIDO APARTMENTS, created to give guests a strong first impression from the moment they arrive. The space combines comfortable seating, warm finishes, and simple yet refined details to create a welcoming entrance that feels both stylish and homely.",
     images: [
-      { src: "https://res.cloudinary.com/iwhhzsrd/image/upload/v1789688464/jemai/lendo/img-3198.jpg", alt: "Reception at Lendo" },
-      { src: "https://res.cloudinary.com/iwhhzsrd/image/upload/v1789688465/jemai/lendo/img-3199.jpg", alt: "Reception at Lendo" },
-      { src: "https://res.cloudinary.com/iwhhzsrd/image/upload/v1789688466/jemai/lendo/img-3200.jpg", alt: "Reception at Lendo" },
+      { src: "https://res.cloudinary.com/iwhhzsrd/image/upload/v1789688464/jemai/lendo/img-3198.jpg", alt: "Reception at Lenido" },
+      { src: "https://res.cloudinary.com/iwhhzsrd/image/upload/v1789688465/jemai/lendo/img-3199.jpg", alt: "Reception at Lenido" },
+      { src: "https://res.cloudinary.com/iwhhzsrd/image/upload/v1789688466/jemai/lendo/img-3200.jpg", alt: "Reception at Lenido" },
     ],
   },
   {
