@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, Wand2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -14,6 +14,7 @@ import {
   fieldChrome,
 } from "@/components/admin/form-section";
 import { FileDrop } from "@/components/admin/file-drop";
+import { TokenInput } from "@/components/admin/token-input";
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +87,38 @@ const required = (message: string) => ({
   validate: (value: string) => value.trim().length > 0 || message,
 });
 
+type VariantRow = FurnitureFormValues["variants"][number];
+
+const emptyVariant: VariantRow = { size: "", colour: "", price: "", quantity: "" };
+
+/** Identifies a combination, so generating twice cannot duplicate a row. */
+const variantKey = (size: string, colour: string) =>
+  `${size.trim().toLowerCase()}|${colour.trim().toLowerCase()}`;
+
+/** The distinct entries of a column, in the order they first appear. */
+const uniqueTokens = (values: (string | undefined)[]) => {
+  const seen = new Set<string>();
+  const tokens: string[] = [];
+
+  for (const value of values) {
+    const token = value?.trim();
+    if (!token || seen.has(token.toLowerCase())) continue;
+    seen.add(token.toLowerCase());
+    tokens.push(token);
+  }
+
+  return tokens;
+};
+
+/** A row is worth keeping if the author has put anything at all in it. */
+const isFilled = (variant: Partial<VariantRow> | undefined) =>
+  Boolean(
+    variant?.size?.trim() ||
+    variant?.colour?.trim() ||
+    variant?.price?.trim() ||
+    variant?.quantity?.trim()
+  );
+
 export const FurnitureForm = ({
   furniture,
   categories,
@@ -130,6 +163,52 @@ export const FurnitureForm = ({
     0
   );
   const stockDerived = (watchedVariants ?? []).some((variant) => variant?.quantity?.trim());
+
+  const [colours, setColours] = useState(() =>
+    uniqueTokens((furniture?.variants ?? []).map((variant) => variant.colour))
+  );
+  const [sizes, setSizes] = useState(() =>
+    uniqueTokens((furniture?.variants ?? []).map((variant) => variant.size))
+  );
+
+  const combinations = colours.flatMap((colour) =>
+    (sizes.length ? sizes : [""]).map((size) => ({ size, colour }))
+  );
+
+  const existingKeys = new Set(
+    (watchedVariants ?? [])
+      .filter((variant) => variant?.colour?.trim() || variant?.size?.trim())
+      .map((variant) => variantKey(variant?.size ?? "", variant?.colour ?? ""))
+  );
+
+  const fresh = combinations.filter(
+    (combination) => !existingKeys.has(variantKey(combination.size, combination.colour))
+  );
+
+  const sizeCount = sizes.length || 1;
+  const builderHint = !colours.length
+    ? "Add at least one colour to generate."
+    : !fresh.length
+      ? "Every combination is already in the table."
+      : `${colours.length} ${colours.length === 1 ? "colour" : "colours"} × ${sizeCount} ${sizeCount === 1 ? "size" : "sizes"}${combinations.length > fresh.length
+        ? ` · ${combinations.length - fresh.length} already added`
+        : ""
+      }`;
+
+  const generate = () => {
+    if (!fresh.length) return;
+
+    const kept = (watchedVariants ?? []).filter(isFilled).map((variant) => ({
+      ...emptyVariant,
+      ...variant,
+    }));
+
+    variants.replace([
+      ...kept,
+      ...fresh.map((combination) => ({ ...emptyVariant, ...combination })),
+    ]);
+    toast.success(`${fresh.length} ${fresh.length === 1 ? "variant" : "variants"} added`);
+  };
 
   const onSubmit = handleSubmit((values) => {
     setFailed(null);
@@ -325,8 +404,58 @@ export const FurnitureForm = ({
               value="variants"
               title="Variants"
               required
-              description="Add variations of this product. Each row is one buyable combination — its size, its colour, what it costs and how many are in stock."
+              description="Add variations of this product. Each row is one buyable combination — its size, its colour, what it costs and how many are in stock. Generate them all from a list of colours and sizes, then fill in the price and quantity."
             >
+              <div className="border-border-default bg-admin-field mb-6 flex flex-col gap-4 rounded-lg border p-4">
+                <p className="text-text-primary text-sm font-semibold">
+                  Build the combinations
+                </p>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1.5">
+                    <FieldLabel htmlFor="variant-colours" required>
+                      Colours
+                    </FieldLabel>
+                    <TokenInput
+                      id="variant-colours"
+                      label="Colours"
+                      values={colours}
+                      onChange={setColours}
+                      placeholder="Walnut, Oak, Ash"
+                      className="bg-background"
+                    />
+                    <FieldHint>Press Enter or type a comma after each one.</FieldHint>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <FieldLabel htmlFor="variant-sizes">Sizes</FieldLabel>
+                    <TokenInput
+                      id="variant-sizes"
+                      label="Sizes"
+                      values={sizes}
+                      onChange={setSizes}
+                      placeholder="Small, Medium, Large"
+                      className="bg-background"
+                    />
+                    <FieldHint>Leave empty if it comes in one size only.</FieldHint>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    disabled={!fresh.length}
+                    onClick={generate}
+                    className="border-border-default bg-background h-10"
+                  >
+                    <Wand2 data-icon="inline-start" />
+                    {fresh.length
+                      ? `Generate ${fresh.length} ${fresh.length === 1 ? "variant" : "variants"}`
+                      : "Generate variants"}
+                  </Button>
+                  <p className="text-text-secondary text-xs">{builderHint}</p>
+                </div>
+              </div>
+
               <div className="flex flex-col gap-3">
                 {variants.fields.map((field, index) => (
                   <div
@@ -421,7 +550,7 @@ export const FurnitureForm = ({
                 type="button"
                 variant="outline"
                 size="lg"
-                onClick={() => variants.append({ size: "", colour: "", price: "", quantity: "" })}
+                onClick={() => variants.append(emptyVariant)}
                 className="border-border-default mt-4 h-10"
               >
                 <Plus data-icon="inline-start" />
