@@ -11,6 +11,7 @@ import {
   type ProductVariant,
 } from "@/lib/products";
 import { furnitureCategoryNames } from "@/lib/taxonomy";
+import { cleanText } from "@/lib/utils";
 import type { Product } from "@/components/site/product-card";
 
 /** Stands in for a product whose imagery has not been uploaded yet. */
@@ -34,7 +35,9 @@ const SWATCHES: Record<string, string> = {
 const NAMED = new Map(colornames.map(({ name, hex }) => [name.toLowerCase(), hex]));
 
 const swatch = (colour: string) => {
-  const name = colour.trim().toLowerCase();
+  // `trim()` alone leaves a pasted word joiner in place, and "\u2060beige"
+  // matches nothing — the fill would silently fall through to cream.
+  const name = cleanText(colour).toLowerCase();
   if (SWATCHES[name]) return SWATCHES[name];
 
   const named = NAMED.get(name);
@@ -98,7 +101,7 @@ const toCatalogueProduct = (record: FurnitureRecord): CatalogueProduct => ({
   name: record.name,
   category: record.category,
   collection: record.category,
-  colors: [...new Set(record.variants.map((variant) => variant.colour).filter(Boolean))],
+  colors: [...new Set(record.variants.map((variant) => cleanText(variant.colour)).filter(Boolean))],
   inStock: inStock(record),
   amount: priceRange(record).low,
   price: headline(record, naira),
@@ -176,7 +179,15 @@ export const getFurnitureDetail = async (slug: string): Promise<ProductDetail | 
   const colourway: ProductColour[] = [];
   const sizes: string[] = [];
 
-  for (const variant of record.variants) {
+  // Cleaned once, here: a row whose colour carries an invisible character would
+  // otherwise draw its own swatch and then match nothing in the stock table.
+  const rows = record.variants.map((variant) => ({
+    ...variant,
+    colour: cleanText(variant.colour),
+    size: cleanText(variant.size),
+  }));
+
+  for (const variant of rows) {
     if (variant.colour && !colourway.some((colour) => colour.name === variant.colour))
       colourway.push({
         name: variant.colour,
@@ -194,7 +205,7 @@ export const getFurnitureDetail = async (slug: string): Promise<ProductDetail | 
 
   const variants: ProductVariant[] = colourway.flatMap((colour) =>
     axes.map((size) => {
-      const rows = record.variants.filter(
+      const matches = rows.filter(
         (variant) =>
           variant.colour === colour.name &&
           (sizes.length ? variant.size === size : true),
@@ -206,8 +217,8 @@ export const getFurnitureDetail = async (slug: string): Promise<ProductDetail | 
         // The combination's own price when one of its rows sets one, the
         // product's otherwise. Two rows collapsing into one cell is only
         // possible on a colour-only product, where the first row wins.
-        amount: rows.find((variant) => variant.price !== null)?.price ?? record.price,
-        stock: rows.reduce((total, variant) => total + variant.quantity, 0),
+        amount: matches.find((variant) => variant.price !== null)?.price ?? record.price,
+        stock: matches.reduce((total, variant) => total + variant.quantity, 0),
       };
     }),
   );

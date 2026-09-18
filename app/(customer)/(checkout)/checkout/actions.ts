@@ -10,6 +10,10 @@ import env from "@/lib/env";
 import { SHIPPING } from "@/lib/orders";
 import { initializePayment, paymentReference } from "@/lib/paystack";
 import { prisma } from "@/lib/prisma";
+import { cleanText } from "@/lib/utils";
+
+const cleanLabel = (value: string | undefined) =>
+  value == null ? value : cleanText(value);
 
 const orderPayload = () =>
   Yup.object({
@@ -31,8 +35,8 @@ const orderPayload = () =>
       .of(
         Yup.object({
           slug: Yup.string().trim().required(),
-          colour: Yup.string().trim().default(""),
-          size: Yup.string().trim().default(""),
+          colour: Yup.string().transform(cleanLabel).default(""),
+          size: Yup.string().transform(cleanLabel).default(""),
           quantity: Yup.number().integer().min(1).max(99).required(),
         }),
       )
@@ -58,10 +62,13 @@ const priceBag = async (lines: OrderLine[]): Promise<PricedBag> => {
     const piece = records.find((record) => record.slug === line.slug);
     if (!piece) return { error: `${line.slug.replace(/-/g, " ")} is no longer available.` };
 
+    // Matched on the cleaned values rather than byte-for-byte: the storefront
+    // sends the colour as it drew it, which is not the stored string when the
+    // row was pasted in carrying invisible characters.
     const colourway = piece.variants.filter(
-      (variant) => !line.colour || variant.colour === line.colour,
+      (variant) => !line.colour || cleanText(variant.colour) === line.colour,
     );
-    const sized = colourway.filter((variant) => variant.size === line.size);
+    const sized = colourway.filter((variant) => cleanText(variant.size) === line.size);
     const variant = (sized.length ? sized : colourway)[0] ?? null;
 
     if (piece.variants.length && !variant)

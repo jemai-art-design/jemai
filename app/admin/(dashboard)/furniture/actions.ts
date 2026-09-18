@@ -14,6 +14,7 @@ import {
 } from "@/lib/admin/furniture";
 import { imageAssetSchema } from "@/lib/cloudinary";
 import { furnitureCategoryNames } from "@/lib/taxonomy";
+import { cleanText } from "@/lib/utils";
 
 /**
  * The console's own layout already turns an unauthenticated visitor away, but a
@@ -27,6 +28,9 @@ const requireFurnitureAccess = async (): Promise<ActionResult<string>> => {
     return fail("You do not have access to the furniture catalogue.");
   return ok(session.id);
 };
+
+const cleanLabel = (value: string | undefined) =>
+  value == null ? value : cleanText(value);
 
 /**
  * The payload both writes accept. Declared once here rather than inline in each
@@ -65,8 +69,13 @@ const furniturePayload = (categories: string[]) =>
     variants: Yup
       .array(
         Yup.object({
-          size: Yup.string().trim().default(""),
-          colour: Yup.string().trim().required("Every variant needs a colour."),
+          // Pasted colour lists carry word joiners and non-breaking spaces,
+          // which survive a trim and then match no swatch and no other row.
+          size: Yup.string().transform(cleanLabel).default(""),
+          colour: Yup
+            .string()
+            .transform(cleanLabel)
+            .required("Every variant needs a colour."),
           // Left blank, the row sells at the product's price — which is what
           // the empty string an untouched input posts has to become.
           price: Yup

@@ -36,3 +36,19 @@ export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
  */
 export const externalLink = (href: string) =>
   /^https?:/.test(href) ? { target: "_blank" as const, rel: "noreferrer" } : {};
+
+/**
+ * Characters that take up no space but still count as different text. Word
+ * joiners and zero-width spaces ride along with anything pasted out of Figma,
+ * Docs or a PDF, and a non-breaking space looks exactly like a normal one.
+ */
+const INVISIBLE = /[\u00ad\u180e\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufeff]/g;
+
+/**
+ * Normalises a short, single-line label — a colour, a size, a tag — so one
+ * typed by hand and one pasted in compare equal. Strips the invisibles, folds
+ * every run of whitespace to a single space, and trims. Not for prose: it
+ * flattens line breaks.
+ */
+export const cleanText = (value: string) =>
+  value.replace(INVISIBLE, "").replace(/\s+/g, " ").trim();

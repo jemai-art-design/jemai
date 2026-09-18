@@ -4,7 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 
 import { fieldChrome } from "@/components/admin/form-section";
-import { cn } from "@/lib/utils";
+import { cleanText, cn } from "@/lib/utils";
 
 type TokenInputProps = {
   id: string;
@@ -41,7 +41,9 @@ export const TokenInput = ({
     const added: string[] = [];
 
     for (const part of text.split(",")) {
-      const token = part.trim();
+      // Pasting a list out of a document brings invisible characters with it;
+      // left in, the same colour typed by hand reads as a second entry.
+      const token = cleanText(part);
       if (!token) continue;
       if (taken.has(token.toLowerCase())) continue;
       taken.add(token.toLowerCase());
