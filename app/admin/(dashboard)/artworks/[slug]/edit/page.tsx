@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { updateArtworkAction } from "@/app/admin/(dashboard)/artworks/actions";
 import { ArtworkForm, type ArtworkFormValues } from "@/components/admin/artwork-form";
 import { listArtists } from "@/lib/admin/artists";
-import { artworkYears, getArtwork } from "@/lib/admin/artworks";
+import { getArtwork, getArtworkYears } from "@/lib/admin/artworks";
 import { toContentAsset } from "@/lib/admin/content";
 import { artworkMediumNames } from "@/lib/taxonomy";
 
@@ -42,7 +42,7 @@ const AdminArtworkEditPage = async ({ params }: PageProps<"/admin/artworks/[slug
       artwork={values}
       artists={artists}
       mediums={await artworkMediumNames()}
-      years={artworkYears}
+      years={getArtworkYears(artwork.year)}
       action={updateArtworkAction.bind(null, artwork.slug)}
       cancelHref={`/admin/artworks/${artwork.slug}`}
       heading={`Edit ${artwork.title}`}

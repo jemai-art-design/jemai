@@ -31,10 +31,19 @@ export type Artwork = {
   updatedAt: string;
 };
 
-/** Newest first, so a work made this year is the top of the year select. */
-export const artworkYears = Array.from({ length: 30 }, (_, i) =>
-  String(new Date().getUTCFullYear() - i)
-);
+/**
+ * The year select's options, newest first, so a work made this year is the top
+ * of the list. Called per request rather than captured once at module load, so a
+ * long-running server rolls over to the new year on its own. Pass a work's own
+ * `year` and it is folded in even when it predates the 30-year window.
+ */
+export const getArtworkYears = (include?: string): string[] => {
+  const years = Array.from({ length: 30 }, (_, i) =>
+    String(new Date().getUTCFullYear() - i)
+  );
+  if (include && !years.includes(include)) years.push(include);
+  return years;
+};
 
 /** Every read pulls the artist the work is attributed to. */
 const withArtist = { artist: { select: { name: true } } } satisfies Prisma.ArtworkInclude;
@@ -74,11 +83,11 @@ export const listArtworks = async ({ search, medium }: ArtworkQuery = {}) => {
       // through the relation rather than a column on the work.
       ...(search
         ? {
-            OR: [
-              { title: { contains: search, mode: "insensitive" as const } },
-              { artist: { name: { contains: search, mode: "insensitive" as const } } },
-            ],
-          }
+          OR: [
+            { title: { contains: search, mode: "insensitive" as const } },
+            { artist: { name: { contains: search, mode: "insensitive" as const } } },
+          ],
+        }
         : {}),
     },
     include: withArtist,
