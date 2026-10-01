@@ -59,8 +59,8 @@ const summaryRow = ({ label, value, strong }: SummaryRow) =>
           <td colspan="2" style="${cell(strong)}"><span style="color:${QUIET};">${escape(label)}</span><br />${escape(value)}</td>
         </tr>`
     : `<tr>
-          <td style="${cell(strong)}word-break:break-word;">${escape(label)}</td>
-          <td align="right" style="${cell(strong)}padding-left:16px;white-space:nowrap;">${escape(value)}</td>
+          <td class="sr-label" style="${cell(strong)}word-break:break-word;">${escape(label)}</td>
+          <td class="sr-value" align="right" style="${cell(strong)}padding-left:16px;white-space:nowrap;">${escape(value)}</td>
         </tr>`;
 
 const summaryBlock = ({ title, rows }: { title?: string; rows: SummaryRow[]; }) => `
@@ -91,6 +91,28 @@ export const renderEmail = ({
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${escape(heading)}</title>
+    <style>
+      /* On a narrow screen a label and its right-aligned value cannot share a
+         row without squeezing one to nothing, so stack the value under its
+         label — the same shape a long value already takes on every width. */
+      @media only screen and (max-width:480px) {
+        .sr-label, .sr-value {
+          display:block !important;
+          width:100% !important;
+          text-align:left !important;
+          white-space:normal !important;
+          padding-left:0 !important;
+        }
+        .sr-label {
+          padding-bottom:0 !important;
+          border-bottom:none !important;
+          color:${QUIET} !important;
+        }
+        .sr-value {
+          padding-top:2px !important;
+        }
+      }
+    </style>
   </head>
   <body style="margin:0;padding:0;background-color:#f6f6f4;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escape(preview)}</div>
