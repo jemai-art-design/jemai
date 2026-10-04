@@ -80,7 +80,7 @@ const ArtworkDetailPage = async ({ params }: PageProps<"/artworks/[slug]">) => {
               fill
               priority
               sizes="(min-width: 1024px) 852px, 100vw"
-              className="object-cover"
+              className="object-contain"
             />
           </div>
         </div>

@@ -26,7 +26,7 @@ export const ArtworkGrid = ({ artworks }: { artworks: Artwork[]; }) => {
                   alt={work.title}
                   fill
                   sizes="(min-width: 1024px) 383px, (min-width: 640px) 50vw, 100vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  className="object-contain transition-transform duration-500 group-hover:scale-[1.02]"
                 />
               </div>
               <div className="px-4.25 pt-4.75 pb-5.75">

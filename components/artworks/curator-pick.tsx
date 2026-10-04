@@ -63,7 +63,7 @@ export const CuratorPick = ({
             alt={image.alt}
             fill
             sizes="(min-width: 1024px) 720px, 100vw"
-            className="object-cover"
+            className="object-contain"
           />
         </div>
       </div>

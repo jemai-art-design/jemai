@@ -25,7 +25,11 @@ const AdminError = ({
       className="admin-surface bg-white"
       code="500"
       title="Something went wrong"
-      description="This screen failed to load. Trying again often clears it — if it does not, quote the reference below."
+      description={
+        error.digest
+          ? "This screen failed to load. Trying again often clears it — if it does not, quote the reference below."
+          : "This screen failed to load. Trying again often clears it."
+      }
       onRetry={retry}
       homeHref="/admin"
       homeLabel="Back to overview"
