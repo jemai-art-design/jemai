@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ProductGallery } from "@/components/furniture/product-gallery";
 import { ProductPurchase } from "@/components/furniture/product-purchase";
 import { ProductSections } from "@/components/furniture/product-sections";
+import { ProductSelectionProvider } from "@/components/furniture/product-selection";
 import { RelatedProducts } from "@/components/site/related-products";
 import { getFurnitureDetail, relatedFurniture } from "@/lib/furniture";
 
@@ -68,23 +69,25 @@ const ProductDetailPage = async ({ params }: PageProps<"/furniture/[slug]">) => 
         </div>
 
         <div className="mt-3.5 w-full px-4 sm:px-6 lg:px-page-gutter">
-          <div className="mx-auto grid w-full max-w-432 grid-cols-1 items-start lg:grid-cols-[660fr_652fr]">
-            <div className="border-border-default border p-6 sm:p-8 lg:p-10">
-              <ProductGallery name={product.name} images={product.gallery} />
-            </div>
+          <ProductSelectionProvider>
+            <div className="mx-auto grid w-full max-w-432 grid-cols-1 items-start lg:grid-cols-[660fr_652fr]">
+              <div className="border-border-default border p-6 sm:p-8 lg:p-10">
+                <ProductGallery product={product} />
+              </div>
 
-            <div className="border-t-border-strong lg:border-l-border-default flex flex-col border-t pt-8 lg:border-l lg:pt-10.5 lg:pr-5 lg:pl-10">
-              <h1 className="font-heading text-text-primary text-2xl sm:text-h3">
-                {product.name}
-              </h1>
+              <div className="border-t-border-strong lg:border-l-border-default flex flex-col border-t pt-8 lg:border-l lg:pt-10.5 lg:pr-5 lg:pl-10">
+                <h1 className="font-heading text-text-primary text-2xl sm:text-h3">
+                  {product.name}
+                </h1>
 
-              <ProductPurchase product={product} />
+                <ProductPurchase product={product} />
 
-              <div className="mt-14 lg:mr-5">
-                <ProductSections sections={product.sections} />
+                <div className="mt-14 lg:mr-5">
+                  <ProductSections sections={product.sections} />
+                </div>
               </div>
             </div>
-          </div>
+          </ProductSelectionProvider>
         </div>
       </section>
 

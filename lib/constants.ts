@@ -19,6 +19,15 @@ export const MAX_IMAGE_UPLOAD_TOTAL_BYTES = MAX_IMAGE_UPLOAD_TOTAL_MB * 1024 * 1
 export const MAX_GALLERY_IMAGES = 12;
 
 /**
+ * A furniture variant's own shots. The detail frame swaps the whole rail when a
+ * combination is picked, so a row carries a small, complete set rather than a
+ * share of one product-wide gallery — one at the very least, three at the most.
+ */
+export const MIN_VARIANT_IMAGES = 1;
+
+export const MAX_VARIANT_IMAGES = 3;
+
+/**
  * The three formats the site serves. Anything else — HEIC off a phone, a TIFF,
  * an SVG that can carry script — is refused at the picker and again by
  * Cloudinary, which is signed with this same list.

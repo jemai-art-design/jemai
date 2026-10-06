@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { QuantityStepper } from "@/components/shared/quantity-stepper";
+import { useProductSelection } from "@/components/furniture/product-selection";
 import { useCart } from "@/lib/cart";
-import { nairaExact, type ProductDetail } from "@/lib/products";
+import { nairaExact, variantImages, type ProductDetail } from "@/lib/products";
 
 type ProductPurchaseProps = {
   product: ProductDetail;
@@ -25,8 +26,9 @@ const stockGreen = "#74aa5b";
 export const ProductPurchase = ({ product }: ProductPurchaseProps) => {
   const { colourway, sizes, variants } = product;
   const { add } = useCart();
-  const [colour, setColour] = useState("");
-  const [size, setSize] = useState("");
+  // The gallery beside this panel draws whichever variant is picked here, so the
+  // selection is held above both of them.
+  const { colour, size, setColour, setSize, clear: clearSelection } = useProductSelection();
   const [quantity, setQuantity] = useState(1);
 
   const table = useMemo(() => {
@@ -71,8 +73,7 @@ export const ProductPurchase = ({ product }: ProductPurchaseProps) => {
   };
 
   const clear = () => {
-    setColour("");
-    setSize("");
+    clearSelection();
     setQuantity(1);
   };
 
@@ -194,7 +195,9 @@ export const ProductPurchase = ({ product }: ProductPurchaseProps) => {
             add({
               slug: product.slug,
               name: product.name,
-              image: product.gallery[0],
+              // The bag shows the combination that was bought, so it carries
+              // that variant's own shot rather than the product's thumbnail.
+              image: variantImages(product, colour, size)[0],
               colour,
               size: size || null,
               amount,

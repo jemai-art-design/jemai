@@ -8,6 +8,23 @@ import { prisma } from "../../lib/prisma";
 const blurb =
   "The unisex Classic Eames is designed to elevate the joy of feeling comfortable at home or when relaxing in nature. The chair are designed in a traditional style.";
 
+/**
+ * The stand-in shots the seeded variants run in. A colour draws the same set
+ * whatever size it comes in, which is how the console's form propagates them.
+ */
+const shots = [
+  "/figma/home/p-alma.png",
+  "/figma/home/p-mila.png",
+  "/figma/home/p-nara.png",
+  "/figma/home/p-stone.png",
+];
+
+/** Three of the range, starting from a different one per colour. */
+const imagesFor = (colour: string) => {
+  const offset = [...colour].reduce((sum, letter) => sum + letter.charCodeAt(0), 0);
+  return [0, 1, 2].map((n) => shots[(offset + n) % shots.length]);
+};
+
 const furnitureSeed = [
   {
     slug: "alma-accent-chair",
@@ -81,13 +98,6 @@ const furnitureSeed = [
 export const seedFurniture = async () => {
   if (await prisma.furniture.count()) return 0;
 
-  const gallery = [
-    "/figma/home/p-alma.png",
-    "/figma/home/p-mila.png",
-    "/figma/home/p-nara.png",
-    "/figma/home/p-stone.png",
-  ];
-
   for (const item of furnitureSeed)
     await prisma.furniture.create({
       data: {
@@ -101,11 +111,14 @@ export const seedFurniture = async () => {
         timeline: blurb,
         customization: blurb,
         thumbnail: item.image,
-        // The piece's own shot first, then the rest of the range as the
-        // stand-in alternate views the frame's thumbnail rail draws.
-        gallery: [item.image, ...gallery.filter((src) => src !== item.image)],
         variants: {
-          create: item.variants.map((variant, position) => ({ ...variant, position })),
+          // Imagery hangs off the combination, so each row carries its own set
+          // — the frame swaps to it the moment a shopper picks that colour.
+          create: item.variants.map((variant, position) => ({
+            ...variant,
+            images: imagesFor(variant.colour),
+            position,
+          })),
         },
       },
     });

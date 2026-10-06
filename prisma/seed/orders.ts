@@ -226,7 +226,7 @@ export const seedOrders = async () => {
           variantId: variant.id,
           name: piece.name,
           slug: piece.slug,
-          image: piece.thumbnail ?? piece.gallery[0] ?? "",
+          image: variant.images[0] ?? piece.thumbnail ?? "",
           colour: line.colour,
           size: line.size,
           unitPrice: piece.price,

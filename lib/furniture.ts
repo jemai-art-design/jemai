@@ -10,6 +10,7 @@ import {
   type ProductSection,
   type ProductVariant,
 } from "@/lib/products";
+import { MAX_VARIANT_IMAGES } from "@/lib/constants";
 import { furnitureCategoryNames } from "@/lib/taxonomy";
 import { cleanText } from "@/lib/utils";
 import type { Product } from "@/components/site/product-card";
@@ -61,10 +62,17 @@ const withRelations = {
 
 type FurnitureRecord = Prisma.FurnitureGetPayload<{ include: typeof withRelations; }>;
 
-/** Thumbnail first, then the gallery in its authored order, de-duplicated. */
+/**
+ * Everything the piece can be shown as: its thumbnail first, then each variant's
+ * own shots in authoring order, de-duplicated — sibling rows that share a colour
+ * usually carry the same pictures.
+ */
 const images = (record: FurnitureRecord) => {
   const sources = [
-    ...new Set([...(record.thumbnail ? [record.thumbnail] : []), ...record.gallery]),
+    ...new Set([
+      ...(record.thumbnail ? [record.thumbnail] : []),
+      ...record.variants.flatMap((variant) => variant.images),
+    ]),
   ];
   return sources.length ? sources : [PLACEHOLDER_IMAGE];
 };
@@ -211,6 +219,11 @@ export const getFurnitureDetail = async (slug: string): Promise<ProductDetail | 
           (sizes.length ? variant.size === size : true),
       );
 
+      // The shots the gallery swaps to. A cell backed by more than one row —
+      // only possible on a colour-only product — pools them, and the rail is
+      // capped at what a variant is allowed to carry either way.
+      const shots = [...new Set(matches.flatMap((variant) => variant.images))];
+
       return {
         colour: colour.name,
         size,
@@ -219,6 +232,9 @@ export const getFurnitureDetail = async (slug: string): Promise<ProductDetail | 
         // possible on a colour-only product, where the first row wins.
         amount: matches.find((variant) => variant.price !== null)?.price ?? record.price,
         stock: matches.reduce((total, variant) => total + variant.quantity, 0),
+        // Falls back to the piece's own rail for a row saved before imagery
+        // moved onto the variants, so no combination draws an empty frame.
+        images: (shots.length ? shots : images(record)).slice(0, MAX_VARIANT_IMAGES),
       };
     }),
   );
@@ -230,7 +246,11 @@ export const getFurnitureDetail = async (slug: string): Promise<ProductDetail | 
     price: headline(record, nairaExact),
     amount: priceRange(record).low,
     summary: record.summary,
-    gallery: images(record).slice(0, 4),
+    // The whole carousel, not just the opening shot: every variant's imagery in
+    // authoring order behind the thumbnail. Picking a combination slides to its
+    // own shots, so the rest of the range has to still be in the rail to slide
+    // through. Never empty — `images` falls back to the placeholder.
+    gallery: images(record),
     colourway,
     sizes: axes,
     variants,

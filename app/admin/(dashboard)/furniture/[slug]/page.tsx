@@ -27,6 +27,12 @@ const AdminFurnitureDetailPage = async ({ params }: PageProps<"/admin/furniture/
   const furniture = await getFurniture(slug);
   if (!furniture) notFound();
 
+  // Rows saved before imagery moved onto the variants, and rows an import left
+  // bare. Called out here rather than only in the form, which has to be opened.
+  const missingMedia = furniture.variants
+    .filter((variant) => !variant.images.length)
+    .map((variant) => [variant.colour, variant.size].filter(Boolean).join(" · "));
+
   return (
     <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_420px]">
       <Card className="ring-border-default py-6">
@@ -70,6 +76,9 @@ const AdminFurnitureDetailPage = async ({ params }: PageProps<"/admin/furniture/
                       <TableHead className="text-text-secondary h-10 px-3 text-xs font-normal">
                         Colour
                       </TableHead>
+                      <TableHead className="text-text-secondary h-10 px-3 text-xs font-normal">
+                        Images
+                      </TableHead>
                       <TableHead className="text-text-secondary h-10 px-3 text-right text-xs font-normal">
                         Price
                       </TableHead>
@@ -86,6 +95,27 @@ const AdminFurnitureDetailPage = async ({ params }: PageProps<"/admin/furniture/
                         </TableCell>
                         <TableCell className="text-text-primary px-3 py-2.5 text-sm">
                           {variant.colour || "—"}
+                        </TableCell>
+                        {/* The shots the storefront swaps to when this
+                            combination is picked, in the order it draws them. */}
+                        <TableCell className="px-3 py-2.5">
+                          {variant.images.length ? (
+                            <ul className="flex items-center gap-1.5">
+                              {variant.images.map((src, index) => (
+                                <li key={`${src}-${index}`}>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={src}
+                                    alt={`${furniture.name} — ${variant.colour}${variant.size ? `, ${variant.size}` : ""
+                                      } view ${index + 1}`}
+                                    className="bg-surface-subtle size-9 rounded-md object-cover"
+                                  />
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <span className="text-[#e11d48] text-xs">None yet</span>
+                          )}
                         </TableCell>
                         {/* A row without its own price sells at the product's,
                             so that is what it shows, muted to say so. */}
@@ -177,23 +207,18 @@ const AdminFurnitureDetailPage = async ({ params }: PageProps<"/admin/furniture/
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            {furniture.media.length ? (
-              <ul className="grid grid-cols-3 gap-3">
-                {furniture.media.map((src, index) => (
-                  <li key={src}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={src}
-                      alt={`${furniture.name} — view ${index + 2}`}
-                      className="bg-surface-subtle aspect-square w-full rounded-md object-cover"
-                    />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-text-secondary text-sm">No media yet.</p>
-            )}
+          <CardContent className="flex flex-col gap-2">
+            <p className="text-text-secondary text-sm">
+              Imagery belongs to the variants — the storefront swaps the gallery
+              to whichever combination a shopper picks. Each row&rsquo;s shots are
+              in the Variants table.
+            </p>
+            {missingMedia.length ? (
+              <p className="text-[#e11d48] text-sm">
+                {`${missingMedia.length} ${missingMedia.length === 1 ? "variant has" : "variants have"} no images yet: `}
+                {missingMedia.join(", ")}.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       </div>

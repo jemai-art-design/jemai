@@ -20,6 +20,12 @@ export type FurnitureVariant = {
   /** Whole naira, or null when the row sells at the product's own price. */
   price: number | null;
   quantity: number;
+  /**
+   * The combination's own shots, in the order the detail rail draws them —
+   * between one and three. The first is the one the frame swaps to when this
+   * combination is picked.
+   */
+  images: string[];
 };
 
 export type Furniture = {
@@ -38,8 +44,6 @@ export type Furniture = {
   customization: string;
   /** Source of the single thumbnail shot, or null before one is uploaded. */
   thumbnail: string | null;
-  /** Gallery sources, in the order the detail frame's rail draws them. */
-  media: string[];
   /** ISO string; the index sorts on it and renders it as "15 May 2020 9:00 pm". */
   updatedAt: string;
 };
@@ -86,12 +90,12 @@ const toFurniture = (record: FurnitureRecord): Furniture => ({
     colour: variant.colour,
     price: variant.price,
     quantity: variant.quantity,
+    images: variant.images,
   })),
   description: record.description,
   timeline: record.timeline,
   customization: record.customization,
   thumbnail: record.thumbnail,
-  media: record.gallery,
   updatedAt: record.updatedAt.toISOString(),
 });
 
@@ -156,6 +160,7 @@ const variantRows = (variants: FurnitureVariant[]) =>
     colour: variant.colour,
     price: variant.price,
     quantity: variant.quantity,
+    images: variant.images,
     position,
   }));
 
@@ -172,7 +177,6 @@ export const createFurniture = async (input: FurnitureInput) => {
       timeline: input.timeline,
       customization: input.customization,
       thumbnail: input.thumbnail,
-      gallery: input.media,
       variants: { create: variantRows(input.variants) },
     },
     include: withRelations,
@@ -202,7 +206,6 @@ export const updateFurniture = async (slug: string, input: FurnitureInput) => {
       timeline: input.timeline,
       customization: input.customization,
       thumbnail: input.thumbnail,
-      gallery: input.media,
       variants: { deleteMany: {}, create: variantRows(input.variants) },
     },
     include: withRelations,

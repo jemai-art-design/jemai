@@ -10,11 +10,10 @@ model Furniture {
   timeline      String @db.Text
   customization String @db.Text
 
+  /// The one shot that stands for the whole product — checkout lines, social
+  /// cards, the console's index. Everything else a buyer looks at hangs off the
+  /// variant they picked, not off here.
   thumbnail String?
-  /// The detail frame's thumbnail rail, in the order it draws them. Sources
-  /// only — the picker's file name and byte size are authoring detail and are
-  /// not worth a row each.
-  gallery   String[] @default([])
 
   variants FurnitureVariant[]
   orders   OrderItem[]
@@ -40,6 +39,11 @@ model FurnitureVariant {
   price Int?
 
   quantity Int @default(0)
+
+  /// What the detail frame draws once this combination is picked: between one
+  /// and three sources, the first of which is the main shot. Enforced by the
+  /// form and its payload schema rather than by the column, which cannot count.
+  images String[] @default([])
 
   position Int @default(0)
 

@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { useFieldArray, useForm, useWatch } from "react-hook-form";
-import { Plus, Trash2, Wand2, X } from "lucide-react";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import { Copy, Plus, Trash2, Wand2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -28,6 +28,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import type { ActionResult } from "@/lib/action-result";
 import { slugify, type ContentAsset } from "@/lib/admin/content";
+import {
+  ALLOWED_IMAGE_LABEL,
+  MAX_IMAGE_SIZE_MB,
+  MAX_VARIANT_IMAGES,
+  MIN_VARIANT_IMAGES,
+} from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export type FurnitureFormValues = {
@@ -37,12 +43,22 @@ export type FurnitureFormValues = {
   price: string;
   stock: string;
   summary: string;
-  variants: { size: string; colour: string; price: string; quantity: string; }[];
+  /**
+   * Imagery belongs to the combination, not the piece: the storefront swaps the
+   * whole rail when a variant is picked, so every row carries its own one to
+   * three shots.
+   */
+  variants: {
+    size: string;
+    colour: string;
+    price: string;
+    quantity: string;
+    images: ContentAsset[];
+  }[];
   description: string;
   timeline: string;
   customization: string;
   thumbnail: ContentAsset[];
-  media: ContentAsset[];
 };
 
 export const emptyFurnitureForm: FurnitureFormValues = {
@@ -52,12 +68,11 @@ export const emptyFurnitureForm: FurnitureFormValues = {
   price: "",
   stock: "",
   summary: "",
-  variants: [{ size: "", colour: "", price: "", quantity: "" }],
+  variants: [{ size: "", colour: "", price: "", quantity: "", images: [] }],
   description: "",
   timeline: "",
   customization: "",
   thumbnail: [],
-  media: [],
 };
 
 type FurnitureFormProps = {
@@ -89,7 +104,13 @@ const required = (message: string) => ({
 
 type VariantRow = FurnitureFormValues["variants"][number];
 
-const emptyVariant: VariantRow = { size: "", colour: "", price: "", quantity: "" };
+const emptyVariant: VariantRow = {
+  size: "",
+  colour: "",
+  price: "",
+  quantity: "",
+  images: [],
+};
 
 /** Identifies a combination, so generating twice cannot duplicate a row. */
 const variantKey = (size: string, colour: string) =>
@@ -116,8 +137,23 @@ const isFilled = (variant: Partial<VariantRow> | undefined) =>
     variant?.size?.trim() ||
     variant?.colour?.trim() ||
     variant?.price?.trim() ||
-    variant?.quantity?.trim()
+    variant?.quantity?.trim() ||
+    variant?.images?.length
   );
+
+/**
+ * Shots vary by colour far more often than by size, so a new combination starts
+ * from whatever an already-filled row of the same colour is using rather than
+ * asking for the same three pictures once per size.
+ */
+const imagesForColour = (rows: Partial<VariantRow>[], colour: string) => {
+  const match = rows.find(
+    (row) =>
+      row.images?.length &&
+      row.colour?.trim().toLowerCase() === colour.trim().toLowerCase()
+  );
+  return match?.images ? [...match.images] : [];
+};
 
 export const FurnitureForm = ({
   furniture,
@@ -148,7 +184,6 @@ export const FurnitureForm = ({
   const variants = useFieldArray({ control, name: "variants" });
   const watchedVariants = useWatch({ control, name: "variants" });
   const thumbnail = useWatch({ control, name: "thumbnail" });
-  const media = useWatch({ control, name: "media" });
   const category = useWatch({ control, name: "category" });
   const stock = useWatch({ control, name: "stock" });
   const price = useWatch({ control, name: "price" });
@@ -205,9 +240,50 @@ export const FurnitureForm = ({
 
     variants.replace([
       ...kept,
-      ...fresh.map((combination) => ({ ...emptyVariant, ...combination })),
+      ...fresh.map((combination) => ({
+        ...emptyVariant,
+        ...combination,
+        images: imagesForColour(kept, combination.colour),
+      })),
     ]);
     toast.success(`${fresh.length} ${fresh.length === 1 ? "variant" : "variants"} added`);
+  };
+
+  /**
+   * Every other row in this row's colour that has no shots of its own. A size
+   * rarely changes what a piece looks like, so one upload can serve the lot.
+   */
+  const sameColourGaps = (index: number) => {
+    const colour = watchedVariants?.[index]?.colour?.trim().toLowerCase();
+    if (!colour) return [];
+
+    return (watchedVariants ?? []).flatMap((variant, position) =>
+      position !== index &&
+        !variant?.images?.length &&
+        variant?.colour?.trim().toLowerCase() === colour
+        ? [position]
+        : []
+    );
+  };
+
+  /** The first complaint the four inline fields of a row have, if any. */
+  const rowError = (index: number) =>
+    errors.variants?.[index]?.colour?.message ??
+    errors.variants?.[index]?.price?.message ??
+    errors.variants?.[index]?.quantity?.message;
+
+  /** Copies a row's shots into every empty row sharing its colour. */
+  const copyToColour = (index: number) => {
+    const images = watchedVariants?.[index]?.images;
+    const targets = sameColourGaps(index);
+    if (!images?.length || !targets.length) return;
+
+    for (const position of targets)
+      setValue(`variants.${position}.images`, [...images], { shouldValidate: true });
+
+    toast.success(
+      `Copied to ${targets.length} ${targets.length === 1 ? "row" : "rows"}`
+    );
   };
 
   const onSubmit = handleSubmit((values) => {
@@ -401,10 +477,22 @@ export const FurnitureForm = ({
             </FormSection>
 
             <FormSection
+              value="thumbnail"
+              title="Thumbnail"
+              description="The one shot that stands for the whole product — the catalogue grid, checkout lines and social sharing. The pictures a shopper looks at on the product page come from the variant they pick, under Variants below."
+            >
+              <FileDrop
+                label="Thumbnail image"
+                assets={thumbnail}
+                onChange={(assets) => setValue("thumbnail", assets, { shouldValidate: true })}
+              />
+            </FormSection>
+
+            <FormSection
               value="variants"
               title="Variants"
               required
-              description="Add variations of this product. Each row is one buyable combination — its size, its colour, what it costs and how many are in stock. Generate them all from a list of colours and sizes, then fill in the price and quantity."
+              description={`Add variations of this product. Each row is one buyable combination — its size, its colour, what it costs, how many are in stock and the ${MIN_VARIANT_IMAGES}–${MAX_VARIANT_IMAGES} shots the storefront shows once a shopper picks it. Generate them all from a list of colours and sizes, then fill in the rest. ${ALLOWED_IMAGE_LABEL}, up to ${MAX_IMAGE_SIZE_MB}MB each · 1200 × 1600 (3:4) recommended.`}
             >
               <div className="border-border-default bg-admin-field mb-6 flex flex-col gap-4 rounded-lg border p-4">
                 <p className="text-text-primary text-sm font-semibold">
@@ -460,89 +548,147 @@ export const FurnitureForm = ({
                 {variants.fields.map((field, index) => (
                   <div
                     key={field.id}
-                    className="border-border-default grid grid-cols-1 items-end gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_8rem_7rem_auto]"
+                    className="border-border-default flex flex-col gap-3 rounded-lg border p-3"
                   >
-                    <div className="flex flex-col gap-1.5">
-                      <FieldLabel htmlFor={`variant-size-${field.id}`}>Size</FieldLabel>
-                      <Input
-                        id={`variant-size-${field.id}`}
-                        placeholder="Organic"
-                        className={cn(fieldChrome, "h-10 text-sm md:text-sm")}
-                        {...register(`variants.${index}.size` as const)}
-                      />
+                    <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[1fr_1fr_8rem_7rem_auto]">
+                      <div className="flex flex-col gap-1.5">
+                        <FieldLabel htmlFor={`variant-size-${field.id}`}>Size</FieldLabel>
+                        <Input
+                          id={`variant-size-${field.id}`}
+                          placeholder="Organic"
+                          className={cn(fieldChrome, "h-10 text-sm md:text-sm")}
+                          {...register(`variants.${index}.size` as const)}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <FieldLabel htmlFor={`variant-colour-${field.id}`} required>
+                          Colour
+                        </FieldLabel>
+                        <Input
+                          id={`variant-colour-${field.id}`}
+                          placeholder="Red"
+                          className={cn(fieldChrome, "h-10 text-sm md:text-sm")}
+                          {...register(
+                            `variants.${index}.colour` as const,
+                            required("Every variant needs a colour.")
+                          )}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <FieldLabel htmlFor={`variant-price-${field.id}`}>Price</FieldLabel>
+                        <Input
+                          id={`variant-price-${field.id}`}
+                          inputMode="numeric"
+                          // Blank is the common case: the row sells at the price
+                          // set in General information, which is what it shows.
+                          placeholder={price?.trim() ? price : "Product price"}
+                          className={cn(fieldChrome, "h-10 text-sm md:text-sm")}
+                          {...register(`variants.${index}.price` as const, {
+                            validate: (value) =>
+                              !value?.trim() ||
+                              (Number(value) > 0 && Number.isFinite(Number(value))) ||
+                              "Enter a price in whole naira, or leave it blank.",
+                          })}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <FieldLabel htmlFor={`variant-qty-${field.id}`} required>
+                          Quantity
+                        </FieldLabel>
+                        <Input
+                          id={`variant-qty-${field.id}`}
+                          inputMode="numeric"
+                          placeholder="0"
+                          className={cn(fieldChrome, "h-10 text-sm md:text-sm")}
+                          {...register(`variants.${index}.quantity` as const, {
+                            required: "Required.",
+                            validate: (value) =>
+                              (Number.isInteger(Number(value)) && Number(value) >= 0) ||
+                              "Whole numbers only.",
+                          })}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-lg"
+                        // The last row is the product's only variant; emptying the
+                        // list would fail the section's own requirement.
+                        disabled={variants.fields.length === 1}
+                        onClick={() => variants.remove(index)}
+                        aria-label={`Remove variant ${index + 1}`}
+                        className="text-text-secondary hover:text-[#e11d48] justify-self-start sm:justify-self-auto"
+                      >
+                        <Trash2 />
+                      </Button>
+                      {/* The images rule reports through its own hint below, so
+                          this row only speaks for the four fields beside it —
+                          and stays out of the grid when it has nothing to say. */}
+                      {rowError(index) ? (
+                        <div className="sm:col-span-5">
+                          <FieldHint error={rowError(index)} />
+                        </div>
+                      ) : null}
                     </div>
+
+                    {/* The shots this combination is shown in. Required: the
+                        detail frame has nothing to swap to without them. */}
                     <div className="flex flex-col gap-1.5">
-                      <FieldLabel htmlFor={`variant-colour-${field.id}`} required>
-                        Colour
-                      </FieldLabel>
-                      <Input
-                        id={`variant-colour-${field.id}`}
-                        placeholder="Red"
-                        className={cn(fieldChrome, "h-10 text-sm md:text-sm")}
-                        {...register(
-                          `variants.${index}.colour` as const,
-                          required("Every variant needs a colour.")
+                      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                        <FieldLabel required>
+                          {`Images (${MIN_VARIANT_IMAGES}–${MAX_VARIANT_IMAGES})`}
+                        </FieldLabel>
+                        {sameColourGaps(index).length ? (
+                          <Button
+                            type="button"
+                            variant="quiet"
+                            size="xs"
+                            onClick={() => copyToColour(index)}
+                            className="text-text-secondary hover:text-action-link h-auto p-0 text-xs"
+                          >
+                            <Copy data-icon="inline-start" />
+                            {`Copy to ${sameColourGaps(index).length} other ${watchedVariants?.[index]?.colour?.trim()} ${sameColourGaps(index).length === 1 ? "row" : "rows"}`}
+                          </Button>
+                        ) : null}
+                      </div>
+                      <Controller
+                        control={control}
+                        name={`variants.${index}.images` as const}
+                        rules={{
+                          // Read off the values the rule is handed rather than
+                          // the watched copy: this closure outlives the render
+                          // it was written in, and the row moves under it when
+                          // one above is removed.
+                          validate: (value: ContentAsset[], values) => {
+                            // A row the author has not started is dropped before
+                            // it is saved, so it is not held to this.
+                            if (!isFilled(values.variants?.[index])) return true;
+                            if (value.length < MIN_VARIANT_IMAGES)
+                              return `Upload at least ${MIN_VARIANT_IMAGES} image for this variant.`;
+                            return (
+                              value.length <= MAX_VARIANT_IMAGES ||
+                              `A variant holds up to ${MAX_VARIANT_IMAGES} images.`
+                            );
+                          },
+                        }}
+                        render={({ field: images, fieldState }) => (
+                          <>
+                            <FileDrop
+                              label={`Images for variant ${index + 1}`}
+                              multiple
+                              reorderable
+                              dense
+                              max={MAX_VARIANT_IMAGES}
+                              assets={images.value}
+                              onChange={images.onChange}
+                            />
+                            <FieldHint error={fieldState.error?.message}>
+                              The first image is the one the storefront leads with.
+                            </FieldHint>
+                          </>
                         )}
                       />
                     </div>
-                    <div className="flex flex-col gap-1.5">
-                      <FieldLabel htmlFor={`variant-price-${field.id}`}>Price</FieldLabel>
-                      <Input
-                        id={`variant-price-${field.id}`}
-                        inputMode="numeric"
-                        // Blank is the common case: the row sells at the price
-                        // set in General information, which is what it shows.
-                        placeholder={price?.trim() ? price : "Product price"}
-                        className={cn(fieldChrome, "h-10 text-sm md:text-sm")}
-                        {...register(`variants.${index}.price` as const, {
-                          validate: (value) =>
-                            !value?.trim() ||
-                            (Number(value) > 0 && Number.isFinite(Number(value))) ||
-                            "Enter a price in whole naira, or leave it blank.",
-                        })}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <FieldLabel htmlFor={`variant-qty-${field.id}`} required>
-                        Quantity
-                      </FieldLabel>
-                      <Input
-                        id={`variant-qty-${field.id}`}
-                        inputMode="numeric"
-                        placeholder="0"
-                        className={cn(fieldChrome, "h-10 text-sm md:text-sm")}
-                        {...register(`variants.${index}.quantity` as const, {
-                          required: "Required.",
-                          validate: (value) =>
-                            (Number.isInteger(Number(value)) && Number(value) >= 0) ||
-                            "Whole numbers only.",
-                        })}
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-lg"
-                      // The last row is the product's only variant; emptying the
-                      // list would fail the section's own requirement.
-                      disabled={variants.fields.length === 1}
-                      onClick={() => variants.remove(index)}
-                      aria-label={`Remove variant ${index + 1}`}
-                      className="text-text-secondary hover:text-[#e11d48] justify-self-start sm:justify-self-auto"
-                    >
-                      <Trash2 />
-                    </Button>
-                    {errors.variants?.[index] ? (
-                      <div className="sm:col-span-5">
-                        <FieldHint
-                          error={
-                            errors.variants[index]?.colour?.message ??
-                            errors.variants[index]?.price?.message ??
-                            errors.variants[index]?.quantity?.message
-                          }
-                        />
-                      </div>
-                    ) : null}
                   </div>
                 ))}
               </div>
@@ -556,32 +702,6 @@ export const FurnitureForm = ({
                 <Plus data-icon="inline-start" />
                 Add more
               </Button>
-            </FormSection>
-
-            <FormSection
-              value="thumbnail"
-              title="Thumbnail"
-              description="Used to represent your product during checkout, social sharing and more."
-            >
-              <FileDrop
-                label="Thumbnail image"
-                assets={thumbnail}
-                onChange={(assets) => setValue("thumbnail", assets, { shouldValidate: true })}
-              />
-            </FormSection>
-
-            <FormSection
-              value="media"
-              title="Media"
-              description="Used to represent your product during checkout, social sharing and more."
-            >
-              <FileDrop
-                label="Product media"
-                multiple
-                reorderable
-                assets={media}
-                onChange={(assets) => setValue("media", assets, { shouldValidate: true })}
-              />
             </FormSection>
 
             <FormSection

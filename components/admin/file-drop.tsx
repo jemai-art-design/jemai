@@ -26,6 +26,8 @@ type FileDropProps = {
   multiple?: boolean;
   /** Only the media list is ordered, so only it draws grip handles. */
   reorderable?: boolean;
+  max?: number;
+  dense?: boolean;
   label: string;
 };
 
@@ -34,6 +36,8 @@ export const FileDrop = ({
   onChange,
   multiple = false,
   reorderable = false,
+  max = MAX_GALLERY_IMAGES,
+  dense = false,
   label,
 }: FileDropProps) => {
   const inputId = useId();
@@ -43,8 +47,8 @@ export const FileDrop = ({
   const [problem, setProblem] = useState<string | null>(null);
   const [uploading, startUpload] = useTransition();
 
-  /** A single slot holds one picture; a gallery holds the catalogue's ceiling. */
-  const capacity = multiple ? MAX_GALLERY_IMAGES - assets.length : 1;
+  /** A single slot holds one picture; a gallery holds whatever it was given. */
+  const capacity = multiple ? max - assets.length : 1;
 
   /**
    * Picked files are checked before anything leaves the browser, then posted one
@@ -64,7 +68,7 @@ export const FileDrop = ({
     if (picked.length > capacity) {
       setProblem(
         multiple
-          ? `You can only upload a maximum of ${MAX_GALLERY_IMAGES} images.`
+          ? `You can only upload a maximum of ${max} ${max === 1 ? "image" : "images"}.`
           : "This slot holds one image.",
       );
       return;
@@ -132,11 +136,12 @@ export const FileDrop = ({
           accept(event.dataTransfer.files);
         }}
         className={cn(
-          "border-border-strong/40 flex flex-col items-center gap-1 rounded-lg border border-dashed px-6 py-6 text-center transition-colors",
+          "border-border-strong/40 flex flex-col items-center gap-1 rounded-lg border border-dashed text-center transition-colors",
+          dense ? "px-3 py-3" : "px-6 py-6",
           over && "border-action-primary bg-admin-field"
         )}
       >
-        <p className="text-text-secondary text-sm">
+        <p className={cn("text-text-secondary", dense ? "text-xs" : "text-sm")}>
           {uploading ? (
             "Uploading…"
           ) : (
@@ -151,9 +156,13 @@ export const FileDrop = ({
             </>
           )}
         </p>
-        <p className="text-text-secondary text-xs">
-          {ALLOWED_IMAGE_LABEL}, up to {MAX_IMAGE_SIZE_MB}MB · 1200 × 1600 (3:4) recommended
-        </p>
+        {/* Inside a variant row the format line would repeat once per
+            combination, so the dense picker leaves it to the section above. */}
+        {dense ? null : (
+          <p className="text-text-secondary text-xs">
+            {ALLOWED_IMAGE_LABEL}, up to {MAX_IMAGE_SIZE_MB}MB · 1200 × 1600 (3:4) recommended
+          </p>
+        )}
         <input
           ref={inputRef}
           id={inputId}
@@ -194,7 +203,8 @@ export const FileDrop = ({
                 setDragging(null);
               }}
               className={cn(
-                "border-border-default flex items-center gap-3 border-b py-3 last:border-b-0",
+                "border-border-default flex items-center gap-3 border-b last:border-b-0",
+                dense ? "py-2" : "py-3",
                 dragging === asset.id && "opacity-50"
               )}
             >
@@ -211,13 +221,27 @@ export const FileDrop = ({
               <img
                 src={asset.src}
                 alt=""
-                className="bg-surface-subtle size-12 shrink-0 rounded-md object-cover"
+                className={cn(
+                  "bg-surface-subtle shrink-0 rounded-md object-cover",
+                  dense ? "size-9" : "size-12"
+                )}
               />
               <span className="min-w-0 flex-1">
-                <span className="text-text-primary block truncate text-sm">{asset.name}</span>
-                <span className="text-text-secondary block text-xs">
-                  {formatFileSize(asset.size)}
+                <span
+                  className={cn(
+                    "text-text-primary block truncate",
+                    dense ? "text-xs" : "text-sm"
+                  )}
+                >
+                  {asset.name}
                 </span>
+                {/* A re-opened edit form reports 0 bytes for a stored source,
+                    which is noise beside a name in a row this tight. */}
+                {dense && !asset.size ? null : (
+                  <span className="text-text-secondary block text-xs">
+                    {formatFileSize(asset.size)}
+                  </span>
+                )}
               </span>
               <Button
                 type="button"

@@ -28,13 +28,13 @@ const AdminFurnitureEditPage = async ({ params }: PageProps<"/admin/furniture/[s
         colour: variant.colour,
         price: variant.price === null ? "" : String(variant.price),
         quantity: String(variant.quantity),
+        images: variant.images.map(toContentAsset),
       }))
-      : [{ size: "", colour: "", price: "", quantity: "" }],
+      : [{ size: "", colour: "", price: "", quantity: "", images: [] }],
     description: furniture.description,
     timeline: furniture.timeline,
     customization: furniture.customization,
     thumbnail: furniture.thumbnail ? [toContentAsset(furniture.thumbnail)] : [],
-    media: furniture.media.map(toContentAsset),
   };
 
   return (

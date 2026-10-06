@@ -13,6 +13,7 @@ import {
   type FurnitureInput,
 } from "@/lib/admin/furniture";
 import { imageAssetSchema } from "@/lib/cloudinary";
+import { MAX_VARIANT_IMAGES, MIN_VARIANT_IMAGES } from "@/lib/constants";
 import { furnitureCategoryNames } from "@/lib/taxonomy";
 import { cleanText } from "@/lib/utils";
 
@@ -94,11 +95,24 @@ const furniturePayload = (categories: string[]) =>
             .integer("Variant quantities must be whole numbers.")
             .min(0, "Variant quantities must be whole numbers.")
             .default(0),
+          // Imagery is the variant's, not the product's: the detail frame swaps
+          // the whole rail when a combination is picked, so every row that ships
+          // has to carry something to swap to.
+          images: Yup
+            .array(imageAssetSchema)
+            .min(
+              MIN_VARIANT_IMAGES,
+              `Every variant needs at least ${MIN_VARIANT_IMAGES} image.`,
+            )
+            .max(
+              MAX_VARIANT_IMAGES,
+              `A variant holds up to ${MAX_VARIANT_IMAGES} images.`,
+            )
+            .default([]),
         }),
       )
       .default([]),
     thumbnail: Yup.array(imageAssetSchema).max(1, "A product has one thumbnail.").default([]),
-    media: Yup.array(imageAssetSchema).default([]),
   });
 
 type FurniturePayload = Yup.InferType<ReturnType<typeof furniturePayload>>;
@@ -115,6 +129,7 @@ const toInput = (values: FurniturePayload): FurnitureInput => {
       colour: variant.colour,
       price: variant.price ?? null,
       quantity: variant.quantity,
+      images: variant.images.map((asset) => asset.src),
     }));
 
   return {
@@ -131,7 +146,6 @@ const toInput = (values: FurniturePayload): FurnitureInput => {
     timeline: values.timeline,
     customization: values.customization,
     thumbnail: values.thumbnail[0]?.src ?? null,
-    media: values.media.map((asset) => asset.src),
   };
 };
 
