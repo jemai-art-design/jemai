@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import Image from "next/image";
+// import Image from "next/image"; 
 import Link from "next/link";
 import type { Exhibition } from "@/lib/exhibitions";
 
@@ -32,20 +32,13 @@ const Breadcrumb = ({ exhibition }: { exhibition: Exhibition; }) => (
   </nav>
 );
 
-/**
- * The opening both detail frames share, pixel for pixel: breadcrumb, a
- * full-bleed 1440 × 501 hero, a page-centred header (artist, a 50px Classico
- * title, the status word and the run), then the lead and body on the same 800px
- * measure the artwork detail page uses — `text-h4` over `text-body-lg`.
- *
- * `action` is the block that closes the copy column: the Register CTA on the
- * upcoming frame, nothing on the past one.
- */
 export const ExhibitionIntro = ({
   exhibition,
+  paragraphs,
   action,
 }: {
   exhibition: Exhibition;
+  paragraphs?: string[];
   action?: ReactNode;
 }) => (
   <>
@@ -59,7 +52,7 @@ export const ExhibitionIntro = ({
       </div>
     </div>
 
-    <div className="relative mt-4 aspect-1440/501 w-full min-h-70">
+    {/* <div className="relative mt-4 aspect-1440/501 w-full min-h-70">
       <Image
         src={exhibition.hero}
         alt={exhibition.title}
@@ -68,11 +61,9 @@ export const ExhibitionIntro = ({
         sizes="100vw"
         className="object-cover"
       />
-    </div>
+    </div> */}
 
     <header className="mt-15.5 w-full px-4 text-center sm:px-6 lg:px-page-gutter">
-      {/* A show whose artists are not settled yet draws no credit line rather
-          than an empty one holding the title down the page. */}
       {exhibition.artist ? (
         <p className="text-h4 text-text-primary uppercase">{exhibition.artist}</p>
       ) : null}
@@ -89,16 +80,16 @@ export const ExhibitionIntro = ({
 
     <div className="mt-11.75 w-full px-4 sm:px-6 lg:px-page-gutter">
       <div className="mx-auto w-full max-w-199.75">
-        <p className="text-h4 text-text-primary">{exhibition.lead}</p>
-        {/* The frame runs both paragraphs on one unbroken 28px pitch, so the
-            block carries no paragraph gap at all. */}
-        <div className="mt-6.25">
-          {exhibition.body.map((paragraph) => (
-            <p key={paragraph} className="text-body-lg text-text-primary">
-              {paragraph}
-            </p>
-          ))}
-        </div>
+        <p className="text-h4 text-text-primary text-justify">{exhibition.lead}</p>
+        {paragraphs?.length ? (
+          <div className="mt-6.25">
+            {paragraphs.map((paragraph) => (
+              <p key={paragraph} className="text-body-lg text-text-primary">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        ) : null}
         {action && <div className="mt-5.5">{action}</div>}
       </div>
     </div>

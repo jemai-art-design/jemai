@@ -40,6 +40,7 @@ const UpcomingExhibitionPage = async ({
 
       <ExhibitionIntro
         exhibition={exhibition}
+        paragraphs={exhibition.body}
         action={
           <RegisterButton
             exhibition={{
@@ -54,10 +55,6 @@ const UpcomingExhibitionPage = async ({
         }
       />
 
-      {/* The rule belongs to the artist block, so a show with nothing written
-          about its artists closes on the copy rather than on a stray line.
-          Unlike every section rule on the site, this one is 2px of
-          `border-default` rather than the 3px `border-strong`. */}
       {exhibition.artistNotes.length ? (
         <>
           <div className="mt-15.5 w-full px-4 sm:px-6 lg:px-page-gutter">

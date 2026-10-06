@@ -91,8 +91,6 @@ const PastExhibitionPage = async ({
         </div>
       ) : null}
 
-      {/* The rule belongs to the artist block, so a show with nothing written
-          about its artists closes on the works rather than on a stray line. */}
       {exhibition.artistNotes.length ? (
         <>
           <div className="mt-20.75 w-full px-4 sm:px-6 lg:px-page-gutter">

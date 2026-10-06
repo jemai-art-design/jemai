@@ -13,21 +13,6 @@ export const metadata: Metadata = {
     "Explore a curated collection of contemporary works chosen for their material, emotion and ability to bring a distinct point of view into the spaces around them.",
 };
 
-const heroSlides = [
-  {
-    src: "/figma/artworks/hero.jpg",
-    alt: "A visitor viewing framed works in the JEMAI gallery",
-  },
-  {
-    src: "/figma/home/ex-slide-1.jpg",
-    alt: "Visitors before a framed work in the gallery",
-  },
-  {
-    src: "/figma/home/ex-sculpture.jpg",
-    alt: "A sculpture on a plinth in the gallery",
-  },
-];
-
 const ArtworksPage = async ({ searchParams }: PageProps<"/artworks">) => {
   const { medium: raw } = await searchParams;
   const requested = typeof raw === "string" ? raw : undefined;
@@ -47,7 +32,6 @@ const ArtworksPage = async ({ searchParams }: PageProps<"/artworks">) => {
         eyebrow="JEMAI Art"
         heading={["Works With A Presence", "Of Their Own."]}
         copy="Explore a curated collection of contemporary works chosen for their material, emotion and ability to bring a distinct point of view into the spaces around them."
-        slides={heroSlides}
       />
 
       {pick ? (
