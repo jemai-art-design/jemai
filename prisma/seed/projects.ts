@@ -1,17 +1,26 @@
-export type Space = {
+import { prisma } from "../../lib/prisma";
+import type { ProjectImage } from "../../lib/projects";
+
+type Seed = {
+  slug: string;
   name: string;
   meta: string;
-  summary?: string;
   description?: string;
-  images: { src: string; alt: string; }[];
+  images: ProjectImage[];
 };
 
-export const spaces: Space[] = [
+/**
+ * The studio's work as the carousel already shows it. These rows were a source
+ * file until the console took the projects over, so they carry the same copy and
+ * the same photography, in the same order.
+ */
+const projectSeed: Seed[] = [
   {
+    slug: "crescendo",
     name: "Crescendo",
     meta: "Residential · Lagos",
-    summary: "",
-    description: "CRESENDO Residence is a contemporary home conceived around modern living and effortless leisure. Sitting on a 636.29 SQM site, the 275.43 SQM residence features a private pool, salon, gym, landscaped spaces, and parking for four vehicles. A considered balance of architecture, comfort, and lifestyle.",
+    description:
+      "CRESENDO Residence is a contemporary home conceived around modern living and effortless leisure. Sitting on a 636.29 SQM site, the 275.43 SQM residence features a private pool, salon, gym, landscaped spaces, and parking for four vehicles. A considered balance of architecture, comfort, and lifestyle.",
     images: [
       { src: "https://res.cloudinary.com/iwhhzsrd/image/upload/v1789688399/jemai/crescendo/ante-room.jpg", alt: "Ante room at Crescendo" },
       { src: "https://res.cloudinary.com/iwhhzsrd/image/upload/v1789688401/jemai/crescendo/dining-v2.jpg", alt: "Dining at Crescendo" },
@@ -52,9 +61,9 @@ export const spaces: Space[] = [
     ],
   },
   {
+    slug: "shore",
     name: "Shore",
     meta: "Residential · Lagos",
-    summary: "",
     description:
       "We transformed SHORE Residence from an unfinished carcass into a complete, comfortable home. The design brought together the finishes, colours, lighting, furniture, and details needed to give the space a warm and cohesive feel. Every room was thoughtfully put together to create a home that is both practical and beautiful.",
     images: [
@@ -72,9 +81,9 @@ export const spaces: Space[] = [
     ],
   },
   {
+    slug: "vhrm-consulting-office",
     name: "VHRM Consulting Office",
     meta: "Workplace · Abuja",
-    summary: "",
     description:
       "We transformed a compact office space for VHRM Consulting in Abuja into a functional and comfortable workplace. With limited space to work with, the design focused on making every corner count while still creating a professional and welcoming atmosphere. The result is a simple, well-organised office that feels open, practical, and thoughtfully designed.",
     images: [
@@ -87,9 +96,9 @@ export const spaces: Space[] = [
     ],
   },
   {
+    slug: "tvk",
     name: "TVK",
     meta: "Retail · Lagos",
-    summary: "",
     description:
       "TVK & RL FASHION HOUSE - We transformed a rented space into a welcoming showroom that reflects the personality of the fashion brands. From the layout and finishes to the lighting and finer details, every element was carefully thought of to create a space that feels stylish, functional, and inviting for both the brand and its customers.",
     images: [
@@ -101,9 +110,9 @@ export const spaces: Space[] = [
     ],
   },
   {
+    slug: "lenido",
     name: "Lenido",
     meta: "Hospitality · Lagos",
-    summary: "",
     description:
       "A thoughtfully designed reception for LENIDO APARTMENTS, created to give guests a strong first impression from the moment they arrive. The space combines comfortable seating, warm finishes, and simple yet refined details to create a welcoming entrance that feels both stylish and homely.",
     images: [
@@ -113,12 +122,45 @@ export const spaces: Space[] = [
     ],
   },
   {
+    slug: "gudu",
     name: "Gudu",
     meta: "Residential · Lagos",
-    summary: "",
     images: [
       { src: "https://res.cloudinary.com/iwhhzsrd/image/upload/v1789688440/jemai/gudu/gudu-bedroom-1-v1.jpg", alt: "Bedroom at Gudu" },
       { src: "https://res.cloudinary.com/iwhhzsrd/image/upload/v1789688441/jemai/gudu/gudu-bedroom-1-v2.jpg", alt: "Bedroom at Gudu" },
     ],
   },
 ];
+
+/**
+ * Essential rather than demo data: this is the studio's own portfolio, and the
+ * JEMAI Designs carousel draws nothing without it — so it is seeded in
+ * production too.
+ *
+ * Skip-if-present, like the catalogue seeds. Once an administrator has edited a
+ * write-up or added a shot, re-running the seed must not put the file's version
+ * back over it.
+ */
+export const seedProjects = async () => {
+  if (await prisma.project.count({ where: { kind: "design" } })) return 0;
+
+  const { count } = await prisma.project.createMany({
+    data: projectSeed.map((project, position) => ({
+      slug: project.slug,
+      name: project.name,
+      // All six are design projects; the festive rail starts empty, since a
+      // season is written up from the studio's own photographs after it ends.
+      kind: "design" as const,
+      meta: project.meta,
+      // None of the six carried a summary; the card lets the photograph speak.
+      summary: "",
+      description: project.description ?? "",
+      images: project.images,
+      // Every one of these is on the site today, so they arrive showing.
+      isActive: true,
+      position,
+    })),
+  });
+
+  return count;
+};

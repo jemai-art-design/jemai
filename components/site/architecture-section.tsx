@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { SectionIntro } from "@/components/site/section-intro";
 import { ConsultationCta } from "@/components/site/consultation-cta";
 import { SpacesCarousel } from "@/components/site/spaces-carousel";
-import { spaces } from "@/lib/spaces";
+import { listActiveProjects } from "@/lib/projects";
 import { cn } from "@/lib/utils";
 
 type ArchitectureSectionProps = {
@@ -12,13 +12,16 @@ type ArchitectureSectionProps = {
   variant?: "section" | "page";
 };
 
-export const ArchitectureSection = ({
+export const ArchitectureSection = async ({
   eyebrow = "05 / JEMAI Designs",
   heading = "Spaces Shaped by Purpose, Personality and Space",
   copy = "From private homes to public spaces, discover environments shaped around the people, purpose and possibilities within them.",
   variant = "section",
 }: ArchitectureSectionProps) => {
   const isPage = variant === "page";
+  // Only what the console has turned on, in the order it arranged. A project
+  // still short of its photography is left out of this list entirely.
+  const projects = await listActiveProjects("design");
 
   return (
     <section
@@ -45,8 +48,10 @@ export const ArchitectureSection = ({
         </div>
       </div>
 
-      {/* Featured spaces — a carousel that runs off the right edge of the page */}
-      <SpacesCarousel spaces={spaces} />
+      {/* Featured spaces — a carousel that runs off the right edge of the page.
+          With nothing to show it draws nothing: an empty rail under a heading
+          reads as a broken page rather than as an empty portfolio. */}
+      {projects.length ? <SpacesCarousel projects={projects} /> : null}
 
       {!isPage && <ConsultationCta />}
     </section>

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Space } from "@/lib/spaces";
+import type { Project } from "@/lib/projects";
 import {
   Dialog,
   DialogClose,
@@ -15,17 +15,25 @@ import {
 } from "@/components/ui/dialog";
 
 type SpacesCarouselProps = {
-  spaces: Space[];
+  projects: Project[];
+  /** The carousel's own accessible name — it draws two different rails. */
+  label?: string;
+  /** What the arrows step through, as their labels name it. */
+  noun?: string;
 };
 
 const CARD_GAP = 28;
 
-export const SpacesCarousel = ({ spaces }: SpacesCarouselProps) => {
+export const SpacesCarousel = ({
+  projects,
+  label = "Featured spaces",
+  noun = "spaces",
+}: SpacesCarouselProps) => {
   const railRef = useRef<HTMLUListElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
   const activeThumbRef = useRef<HTMLButtonElement>(null);
   const [progress, setProgress] = useState(0);
-  const [active, setActive] = useState<Space | null>(null);
+  const [active, setActive] = useState<Project | null>(null);
   /** Which of the open project's shots the lightbox is showing. */
   const [shot, setShot] = useState(0);
 
@@ -47,8 +55,8 @@ export const SpacesCarousel = ({ spaces }: SpacesCarouselProps) => {
     });
   }, [shot, active]);
 
-  const open = (space: Space) => {
-    setActive(space);
+  const open = (project: Project) => {
+    setActive(project);
     setShot(0);
   };
 
@@ -72,7 +80,7 @@ export const SpacesCarousel = ({ spaces }: SpacesCarouselProps) => {
     <div
       role="group"
       aria-roledescription="carousel"
-      aria-label="Featured spaces"
+      aria-label={label}
       onKeyDown={(event) => {
         if (event.key === "ArrowLeft") { event.preventDefault(); go(-1); }
         if (event.key === "ArrowRight") { event.preventDefault(); go(1); }
@@ -85,32 +93,32 @@ export const SpacesCarousel = ({ spaces }: SpacesCarouselProps) => {
           onScroll={onScroll}
           className="flex snap-x snap-mandatory gap-7 overflow-x-auto pr-4 sm:pr-6 lg:pr-page-gutter scrollbar-none [&::-webkit-scrollbar]:hidden"
         >
-          {spaces.map((space) => (
-            <li key={space.name} className="w-70 shrink-0 snap-start sm:w-82.5">
+          {projects.map((project) => (
+            <li key={project.slug} className="w-70 shrink-0 snap-start sm:w-82.5">
               <button
                 type="button"
-                onClick={() => open(space)}
-                aria-label={`View ${space.name}`}
+                onClick={() => open(project)}
+                aria-label={`View ${project.name}`}
                 className="group flex w-full cursor-pointer flex-col gap-2.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 <div className="relative aspect-square w-full overflow-hidden bg-[#e9e6de]">
                   <Image
-                    src={space.images[0].src}
-                    alt={space.images[0].alt}
+                    src={project.images[0].src}
+                    alt={project.images[0].alt}
                     fill
                     sizes="(min-width: 640px) 330px, 280px"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
                 <p className="text-eyebrow-lg text-text-secondary pt-2.5 uppercase">
-                  {space.meta}
+                  {project.meta}
                 </p>
                 <h3 className="text-h4 text-text-primary font-heading">
-                  {space.name}
+                  {project.name}
                 </h3>
-                {space.summary && (
+                {project.summary && (
                   <p className="text-body-sm text-text-secondary">
-                    {space.summary}
+                    {project.summary}
                   </p>
                 )}
               </button>
@@ -120,14 +128,14 @@ export const SpacesCarousel = ({ spaces }: SpacesCarouselProps) => {
 
         {/* Arrows sit over the photography, clear of the copy below it. */}
         {([
-          { label: "Previous", delta: -1, icon: "/figma/icons/arrow-left.svg", side: "left-3", edge: 0 },
-          { label: "Next", delta: 1, icon: "/figma/icons/arrow-right.svg", side: "right-3", edge: 1 },
-        ] as const).map(({ label, delta, icon, side, edge }) => (
+          { direction: "Previous", delta: -1, icon: "/figma/icons/arrow-left.svg", side: "left-3", edge: 0 },
+          { direction: "Next", delta: 1, icon: "/figma/icons/arrow-right.svg", side: "right-3", edge: 1 },
+        ] as const).map(({ direction, delta, icon, side, edge }) => (
           <button
-            key={label}
+            key={direction}
             type="button"
             onClick={() => go(delta)}
-            aria-label={`${label} spaces`}
+            aria-label={`${direction} ${noun}`}
             disabled={Math.abs(progress - edge) < 0.01}
             className={`absolute top-35 hidden size-10 -translate-y-1/2 items-center justify-center bg-black/25 text-white backdrop-blur-[2px] transition-opacity hover:bg-black/40 disabled:pointer-events-none disabled:opacity-0 sm:top-41.25 md:flex ${side}`}
           >
@@ -173,15 +181,15 @@ export const SpacesCarousel = ({ spaces }: SpacesCarouselProps) => {
             {shots.length > 1 && (
               <>
                 {([
-                  { label: "Previous", delta: -1, Icon: ChevronLeft, side: "left-5" },
-                  { label: "Next", delta: 1, Icon: ChevronRight, side: "right-5" },
-                ] as const).map(({ label, delta, Icon, side }) => (
+                  { direction: "Previous", delta: -1, Icon: ChevronLeft, side: "left-5" },
+                  { direction: "Next", delta: 1, Icon: ChevronRight, side: "right-5" },
+                ] as const).map(({ direction, delta, Icon, side }) => (
                   <Button
-                    key={label}
+                    key={direction}
                     type="button"
                     variant="quiet"
                     onClick={() => goShot(delta)}
-                    aria-label={`${label} photograph`}
+                    aria-label={`${direction} photograph`}
                     className={cn(
                       "bg-surface-page text-icon-primary absolute top-1/2 size-12.5 -translate-y-1/2 rounded-full hover:bg-white",
                       side,

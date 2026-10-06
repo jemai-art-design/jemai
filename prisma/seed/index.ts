@@ -13,6 +13,7 @@ import { seedExhibitions } from "./exhibitions";
 import { seedFurniture } from "./furniture";
 import { seedSubscribers } from "./newsletter";
 import { seedOrders } from "./orders";
+import { seedProjects } from "./projects";
 import { seedTaxonomy } from "./taxonomy";
 
 type Seed = {
@@ -24,6 +25,7 @@ type Seed = {
 
 const essential: Seed[] = [
   { run: seedTaxonomy, one: "catalogue term", many: "catalogue terms", subject: "Categories and mediums" },
+  { run: seedProjects, one: "design project", many: "design projects", subject: "Design projects" },
 ];
 
 const demo: Seed[] = [

@@ -1,4 +1,6 @@
 import type { ChristmasStatus as Status, RequestedArea } from "@/lib/christmas";
+import type { ProjectImage } from "@/lib/projects";
+import type { ProjectKind as Kind } from "@/lib/project-kinds";
 
 /**
  * The types `prisma-json-types-generator` substitutes into the generated
@@ -13,6 +15,8 @@ declare global {
   namespace PrismaJson {
     type ChristmasAreas = RequestedArea[];
     type ChristmasStatus = Status;
+    type ProjectImages = ProjectImage[];
+    type ProjectKind = Kind;
   }
 }
 

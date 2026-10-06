@@ -19,6 +19,13 @@ export const MAX_IMAGE_UPLOAD_TOTAL_BYTES = MAX_IMAGE_UPLOAD_TOTAL_MB * 1024 * 1
 export const MAX_GALLERY_IMAGES = 12;
 
 /**
+ * A design project's photography. A finished job is documented room by room, so
+ * the ceiling is far above a catalogue gallery's dozen — pictures go up in
+ * batches, since the total-size rule still caps any one pick.
+ */
+export const MAX_PROJECT_IMAGES = 48;
+
+/**
  * A furniture variant's own shots. The detail frame swaps the whole rail when a
  * combination is picked, so a row carries a small, complete set rather than a
  * share of one product-wide gallery — one at the very least, three at the most.

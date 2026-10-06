@@ -1,0 +1,53 @@
+/// A project — one of the studio's own jobs, drawn as a card on a carousel and
+/// opened into a lightbox of its photography.
+///
+/// Unlike the catalogue, a project is authored rather than traded: there is no
+/// price, no stock and no run of dates. What it does carry is a visibility
+/// switch, so a job can be written up over several sittings and only joins the
+/// carousel once the studio says so.
+model Project {
+  id   String @id @default(uuid(7))
+  slug String @unique
+  name String
+
+  /// Which carousel draws it: the JEMAI Designs rail on the home and
+  /// consultation pages, or the festive rail on the Christmas styling page. A
+  /// festive project is the same record in every other respect — same copy,
+  /// same photography, same switch — so the two share a table and differ only
+  /// in where they are shown.
+  /// ![PrismaJson.ProjectKind]
+  kind String @default("design")
+
+  /// "Residential · Lagos" — the discipline and the city, as the card prints
+  /// them in small caps above the name.
+  meta String @default("")
+
+  /// The one line under the name on the card. Optional: most projects let the
+  /// photography speak and carry none.
+  summary String @db.Text
+
+  /// The paragraph the lightbox prints beside the photographs.
+  description String @db.Text
+
+  /// `[{ src, alt }]` in the order the lightbox walks them — the first is the
+  /// shot the card draws. Each needs its own alt text, which is why these are
+  /// objects rather than the bare source list the catalogue stores.
+  /// [ProjectImages]
+  images Json @default("[]")
+
+  /// Off until the studio turns it on. A hidden project is still edited and
+  /// still holds its slug; it simply draws nothing on the storefront.
+  isActive Boolean @default(false)
+
+  /// Where it sits in its own carousel. Assigned on create as one past the last
+  /// of the same kind, so a new project lands at the end of its rail rather than
+  /// jumping the queue — and the two rails are ordered independently.
+  position Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind, isActive, position])
+  @@index([updatedAt])
+  @@map("projects")
+}

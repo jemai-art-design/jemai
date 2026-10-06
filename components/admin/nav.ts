@@ -2,6 +2,8 @@ import {
   Armchair,
   CalendarDays,
   ClipboardList,
+  Compass,
+  Snowflake,
   Frame,
   Gift,
   LayoutDashboard,
@@ -71,6 +73,23 @@ export const adminNav: AdminNavGroup[] = [
         url: "/admin/christmas-requests",
         icon: Gift,
         permission: "christmas-requests",
+      },
+    ],
+  },
+  {
+    title: "Showcase",
+    items: [
+      {
+        title: "Design projects",
+        url: "/admin/design-projects",
+        icon: Compass,
+        permission: "design-projects",
+      },
+      {
+        title: "Christmas projects",
+        url: "/admin/christmas-projects",
+        icon: Snowflake,
+        permission: "christmas-projects",
       },
     ],
   },

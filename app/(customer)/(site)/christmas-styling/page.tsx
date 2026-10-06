@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ChristmasHero } from "@/components/christmas/christmas-hero";
+import { FestiveProjects } from "@/components/christmas/festive-projects";
 import { FestiveRail } from "@/components/christmas/festive-rail";
 import { ProcessRow } from "@/components/christmas/process-row";
 import { RequestForm } from "@/components/christmas/request-form";
@@ -20,7 +21,12 @@ export const metadata: Metadata = {
  * The page has two states and the frames draw both: while slots remain it opens
  * on a count and closes on the request form; at zero the hero drops its button,
  * the capacity plate reads "0 consultation spaces remaining" and the form band
- * becomes a single way onward. Sections 01–03 are identical in both.
+ * becomes a single way onward.
+ *
+ * Section 03 is the proof — seasons already styled, drawn from the console. It
+ * sits after the services and before the process and the ask, and it removes
+ * itself entirely when there is nothing in it, so the numbering it carries is
+ * the one case on this page where a section can be absent.
  *
  * The count is the season's allocation less the requests that have been
  * **paid**, not the ones that have been submitted: the form is an enquiry, and
@@ -94,22 +100,32 @@ const ChristmasStylingPage = async () => {
         copy="We bring together festive styling, lighting, greenery and thoughtful details to create Christmas spaces that feel warm, beautiful and unique to their surroundings."
       />
 
+      <FestiveProjects
+        eyebrow="03 / Christmases we have styled"
+        heading={["Christmases We Have", "Already Styled."]}
+        copy={
+          open
+            ? "Every festive setting begins with a different home and a different way of gathering. These are Christmases JEMAI has already shaped — the rooms, the tables and the entrances where the season took its form."
+            : "The request list for this season is closed, but the work is not going anywhere. These are Christmases JEMAI has already shaped, and the kind of setting next season begins from."
+        }
+      />
+
       <ProcessRow
-        eyebrow="03 / From request to setting"
+        eyebrow="04 / From request to setting"
         heading="A Personal Process, From The First Conversation."
         steps={steps}
       />
 
       {open ? (
         <RequestForm
-          eyebrow="04 / Your Christmas request"
+          eyebrow="05 / Your Christmas request"
           heading="Request A Christmas Consultation"
           copy="Submit your details and selected spaces. This is a consultation request, not a confirmed appointment or payment."
           footnote="Our team will contact you within 24 hours to discuss your brief, confirm the scope and arrange quotation and payment. No payment is collected on this page."
         />
       ) : (
         <SeasonClosed
-          eyebrow="04 / Your Christmas request"
+          eyebrow="05 / Your Christmas request"
           heading="This Season’s Consultation List Is Full."
           copy={`All ${seasonCapacity} consultation spaces for Christmas ${currentChristmasYear()} have been booked, so we are no longer accepting new submissions.`}
           cta={{ label: "Explore Furniture & Art", href: "/furniture" }}

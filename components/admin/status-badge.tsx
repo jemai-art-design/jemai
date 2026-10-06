@@ -2,6 +2,7 @@ import type { ConsultationStatus } from "@/lib/admin/consultation-record";
 import type { EnquiryStatus } from "@/lib/admin/enquiry-record";
 import type { ExhibitionStatus } from "@/lib/admin/exhibitions";
 import type { FulfillmentStatus, PaymentStatus } from "@/lib/admin/order-record";
+import type { ProjectStatus } from "@/lib/admin/projects";
 import type { RegistrationStatus } from "@/lib/admin/registration-record";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -12,7 +13,8 @@ type AdminStatus =
   | ExhibitionStatus
   | EnquiryStatus
   | ConsultationStatus
-  | RegistrationStatus;
+  | RegistrationStatus
+  | ProjectStatus;
 
 /**
  * Dot colour per state — the badge chrome itself is the same hairline pill.
@@ -40,6 +42,10 @@ const dot: Record<AdminStatus, string> = {
   Paid: "bg-[#34c759]",
   "Pending payment": "bg-[#ff8d28]",
   Failed: "bg-[#e11d48]",
+  // A design project is only ever on the site or held back, so it borrows the
+  // settled green and the same grey the secondary copy is set in.
+  Visible: "bg-[#34c759]",
+  Hidden: "bg-text-secondary",
 };
 
 /** The status pill the order and exhibition tables share: a 6px dot, the label, a hairline border. */
