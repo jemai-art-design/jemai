@@ -1,0 +1,28 @@
+/// One static image location on the storefront, as the console has overridden it.
+///
+/// The locations themselves are not rows: they are declared in
+/// `lib/site-image-slots.ts`, because a location only exists if a component
+/// draws it, and that is a code fact. What a row carries is the *override* —
+/// the pictures the studio has put in a location in place of the ones the site
+/// shipped with. No row means the shipped defaults are still drawn, which is
+/// also what makes "reset to default" a delete rather than a second copy of the
+/// original list.
+model SiteImageSlot {
+  id String @id @default(uuid(7))
+
+  /// The registry key — `home.hero`, `about.header`. One row per location.
+  slot String @unique
+
+  /// `[{ key, src, alt, fit }]` in draw order. `key` is stable for the life of
+  /// the picture and is the last segment of its Cloudinary public id, which is
+  /// how a replacement overwrites the file it replaces rather than piling a
+  /// second one up beside it. `fit` is `cover` or `contain` — whether the
+  /// picture fills its box or sits inside it.
+  /// [SiteImages]
+  images Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("site_image_slots")
+}

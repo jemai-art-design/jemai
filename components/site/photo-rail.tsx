@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { objectFit, type ImageFit } from "@/lib/site-image-slots";
 import { cn } from "@/lib/utils";
 
 export type RailPhoto = {
@@ -11,6 +12,8 @@ export type RailPhoto = {
   /** Captioned rails draw these under the photograph; the intro rail has none. */
   title?: string;
   caption?: string;
+  /** How it sits in the slide. Cropped to fill unless the console says otherwise. */
+  fit?: ImageFit;
 };
 
 type PhotoRailProps = {
@@ -173,7 +176,7 @@ export const PhotoRail = ({
                 alt={photo.alt}
                 fill
                 sizes="(min-width: 640px) 330px, 70vw"
-                className="object-cover"
+                className={objectFit(photo.fit)}
               />
             </div>
 

@@ -40,7 +40,7 @@ const UpcomingExhibitionsPage = async () => {
       </div>
 
       <div className="mt-2">
-        <ExhibitionHero slides={upcomingHero} />
+        <ExhibitionHero slides={await upcomingHero()} />
       </div>
 
       <div className="mt-16">

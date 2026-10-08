@@ -1,8 +1,9 @@
 import Image from "next/image";
+import { objectFit, type SiteImage } from "@/lib/site-image-slots";
 import { cn } from "@/lib/utils";
 
 type OrnamentProps = {
-  src: string;
+  image: SiteImage;
   width: number;
   height: number;
   /** Absolute placement against the nearest positioned ancestor. */
@@ -18,10 +19,14 @@ type OrnamentProps = {
  * They are hidden below `lg`. The Figma file draws desktop frames only, and at
  * phone widths these cut-outs would land on top of the copy rather than beside
  * it.
+ *
+ * The box is the frame's, so a cut-out the studio has replaced with a picture
+ * of another shape would be stretched into it — which is why the fit the
+ * console holds is applied here and why these locations default to "contain".
  */
-export const Ornament = ({ src, width, height, className }: OrnamentProps) => (
+export const Ornament = ({ image, width, height, className }: OrnamentProps) => (
   <Image
-    src={src}
+    src={image.src}
     alt=""
     aria-hidden
     width={width}
@@ -29,6 +34,7 @@ export const Ornament = ({ src, width, height, className }: OrnamentProps) => (
     unoptimized
     className={cn(
       "pointer-events-none absolute hidden select-none lg:block",
+      objectFit(image.fit),
       className,
     )}
   />

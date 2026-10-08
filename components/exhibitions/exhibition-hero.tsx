@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Shot } from "@/lib/exhibitions";
+import { objectFit, type SiteImage } from "@/lib/site-image-slots";
 
 /**
  * The full-bleed 1440 × 501 carousel both exhibition index frames open on:
@@ -12,7 +12,7 @@ import type { Shot } from "@/lib/exhibitions";
  * Both frames draw only the first slide, so the rest is written; the dash count
  * follows the frame's three.
  */
-export const ExhibitionHero = ({ slides }: { slides: Shot[]; }) => {
+export const ExhibitionHero = ({ slides }: { slides: SiteImage[]; }) => {
   const [index, setIndex] = useState(0);
   const go = (step: number) =>
     setIndex((i) => (i + step + slides.length) % slides.length);
@@ -23,13 +23,13 @@ export const ExhibitionHero = ({ slides }: { slides: Shot[]; }) => {
     <div className="relative aspect-1440/501 w-full min-h-70 overflow-hidden">
       {slides.map((slide, i) => (
         <Image
-          key={slide.src}
+          key={slide.key}
           src={slide.src}
           alt={slide.alt}
           fill
           priority={i === 0}
           sizes="100vw"
-          className={`object-cover transition-opacity duration-500 ${
+          className={`${objectFit(slide.fit)} transition-opacity duration-500 ${
             i === index ? "opacity-100" : "opacity-0"
           }`}
         />
@@ -55,7 +55,7 @@ export const ExhibitionHero = ({ slides }: { slides: Shot[]; }) => {
       <div className="absolute bottom-9.75 left-1/2 flex -translate-x-1/2 gap-2">
         {slides.map((slide, i) => (
           <button
-            key={slide.src}
+            key={slide.key}
             type="button"
             onClick={() => setIndex(i)}
             aria-label={`Show slide ${i + 1}`}

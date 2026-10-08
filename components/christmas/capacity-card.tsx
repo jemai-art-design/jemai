@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { objectFit, type SiteImage } from "@/lib/site-image-slots";
 
 export type Capacity = {
   /** Slots still open. Zero is what closes the season across the page. */
@@ -12,6 +13,8 @@ type CapacityCardProps = {
   capacity: Capacity;
   copy: string;
   cta: { label: string; href: string };
+  /** The gift-wrap ground. Only its border is seen, behind the inset panel. */
+  plate: SiteImage;
 };
 
 /**
@@ -19,7 +22,7 @@ type CapacityCardProps = {
  * 40px-inset page-ground panel. The plate is decoration, so it carries an empty
  * alt and the count is read from the text.
  */
-export const CapacityCard = ({ capacity, copy, cta }: CapacityCardProps) => {
+export const CapacityCard = ({ capacity, copy, cta, plate }: CapacityCardProps) => {
   const open = capacity.available > 0;
 
   return (
@@ -28,12 +31,12 @@ export const CapacityCard = ({ capacity, copy, cta }: CapacityCardProps) => {
        the panel wherever the count or the copy runs longer than the export. */
     <div className="relative w-full max-w-137 lg:min-h-151.25">
       <Image
-        src="/figma/christmas/capacity-frame.jpg"
+        src={plate.src}
         alt=""
         aria-hidden
         fill
         sizes="(min-width: 1024px) 548px, 100vw"
-        className="object-cover"
+        className={objectFit(plate.fit)}
       />
 
       <div className="bg-surface-page relative m-7 flex flex-col items-center px-6 pt-8 pb-8 text-center sm:m-10 sm:px-12 lg:pt-15.25 lg:pb-14.75">

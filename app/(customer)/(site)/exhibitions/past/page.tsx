@@ -28,7 +28,7 @@ const PastExhibitionsPage = async () => {
       </div>
 
       <div className="mt-2">
-        <ExhibitionHero slides={pastHero} />
+        <ExhibitionHero slides={await pastHero()} />
       </div>
 
       <div className="mt-16">

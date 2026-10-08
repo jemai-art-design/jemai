@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { Artwork, ArtworkDetail, CuratedArtwork } from "@/lib/gallery";
 import type { Prisma } from "@/lib/generated/prisma/client";
+import { siteImageSrc } from "@/lib/site-images";
 import { artworkMediumNames } from "@/lib/taxonomy";
 
 /** Every read pulls the artist the work is attributed to. */
@@ -8,26 +9,30 @@ const withArtist = { artist: { select: { name: true } } } satisfies Prisma.Artwo
 
 type ArtworkRecord = Prisma.ArtworkGetPayload<{ include: typeof withArtist; }>;
 
-/** Stands in for a work whose photography has not been uploaded yet. */
-const PLACEHOLDER_IMAGE = "/figma/artworks/work-01.jpg";
+/**
+ * Stands in for a work whose photography has not been uploaded yet. A site
+ * image rather than a constant: it is seen on the grid, on the Curator's Pick
+ * and on the work's own page, so the plate is the studio's to choose.
+ */
+const placeholder = () => siteImageSrc("shared.artwork-placeholder");
 
 /** Thumbnail first, then the gallery in its authored order, de-duplicated. */
-const images = (record: ArtworkRecord) => {
+const images = (plate: string, record: ArtworkRecord) => {
   const sources = [
     ...new Set([...(record.thumbnail ? [record.thumbnail] : []), ...record.gallery]),
   ];
-  return sources.length ? sources : [PLACEHOLDER_IMAGE];
+  return sources.length ? sources : [plate];
 };
 
 /** The caption run: medium and dimensions, whichever of the two is filled in. */
 const caption = (record: ArtworkRecord) =>
   [record.medium, record.dimensions].filter(Boolean).join(" · ");
 
-const toArtwork = (record: ArtworkRecord): Artwork => ({
+const toArtwork = (plate: string, record: ArtworkRecord): Artwork => ({
   slug: record.slug,
   title: record.title,
   medium: caption(record),
-  src: images(record)[0],
+  src: images(plate, record)[0],
 });
 
 /**
@@ -47,24 +52,30 @@ export const listArtworkMediums = async (): Promise<string[]> => {
 };
 
 export const listArtworks = async (medium?: string): Promise<Artwork[]> => {
-  const records = await prisma.artwork.findMany({
-    where: medium ? { medium } : undefined,
-    include: withArtist,
-    orderBy: { createdAt: "desc" },
-  });
-  return records.map(toArtwork);
+  const [records, plate] = await Promise.all([
+    prisma.artwork.findMany({
+      where: medium ? { medium } : undefined,
+      include: withArtist,
+      orderBy: { createdAt: "desc" },
+    }),
+    placeholder(),
+  ]);
+  return records.map(toArtwork.bind(null, plate));
 };
 
 export const curatedArtworks = async (
   limit = 3,
   medium?: string,
 ): Promise<CuratedArtwork[]> => {
-  const records = await prisma.artwork.findMany({
-    where: medium ? { medium, curatorsPick: true } : undefined,
-    include: withArtist,
-    orderBy: [{ curatorsPick: "desc" }, { createdAt: "desc" }],
-    take: limit,
-  });
+  const [records, plate] = await Promise.all([
+    prisma.artwork.findMany({
+      where: medium ? { medium, curatorsPick: true } : undefined,
+      include: withArtist,
+      orderBy: [{ curatorsPick: "desc" }, { createdAt: "desc" }],
+      take: limit,
+    }),
+    placeholder(),
+  ]);
 
   return records.map((record) => ({
     slug: record.slug,
@@ -73,15 +84,18 @@ export const curatedArtworks = async (
     summary: record.summary,
     medium: record.medium,
     dimensions: record.dimensions,
-    src: images(record)[0],
+    src: images(plate, record)[0],
   }));
 };
 
 export const getArtworkDetail = async (slug: string): Promise<ArtworkDetail | null> => {
-  const record = await prisma.artwork.findUnique({ where: { slug }, include: withArtist });
+  const [record, plate] = await Promise.all([
+    prisma.artwork.findUnique({ where: { slug }, include: withArtist }),
+    placeholder(),
+  ]);
   if (!record) return null;
 
-  const [hero, ...rest] = images(record);
+  const [hero, ...rest] = images(plate, record);
 
   return {
     slug: record.slug,

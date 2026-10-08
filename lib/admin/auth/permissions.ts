@@ -8,6 +8,7 @@ export const ADMIN_PERMISSIONS = [
   "exhibitions",
   "design-projects",
   "christmas-projects",
+  "site-images",
   "orders",
   "artwork-enquiries",
   "consultation-requests",

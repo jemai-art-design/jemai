@@ -10,6 +10,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { objectFit, type SiteImage } from "@/lib/site-image-slots";
 
 /** Which of the two panels the frames draw. */
 export type Outcome = "received" | "duplicate";
@@ -29,6 +30,8 @@ type OutcomeModalProps = {
   /** `null` closes it — the caller holds which panel is showing. */
   outcome: Outcome | null;
   onOpenChange: (open: boolean) => void;
+  /** The left pane. Both outcomes share it, so the caller reads it once. */
+  photograph: SiteImage;
 };
 
 /**
@@ -36,7 +39,11 @@ type OutcomeModalProps = {
  * exhibition register modal uses: a 544px photograph and a 576px panel padded
  * 48px all round. Both outcomes share the geometry and differ only in copy.
  */
-export const OutcomeModal = ({ outcome, onOpenChange }: OutcomeModalProps) => {
+export const OutcomeModal = ({
+  outcome,
+  onOpenChange,
+  photograph,
+}: OutcomeModalProps) => {
   const panel = outcome ? panels[outcome] : null;
 
   return (
@@ -44,12 +51,12 @@ export const OutcomeModal = ({ outcome, onOpenChange }: OutcomeModalProps) => {
       <DialogContent className="flex h-140.75 w-[min(1120px,calc(100vw-2rem))] max-w-none overflow-hidden max-lg:h-auto max-lg:max-h-[calc(100dvh-2rem)] max-lg:overflow-y-auto">
         <div className="bg-surface-inverse relative hidden w-136 shrink-0 lg:block">
           <Image
-            src="/figma/christmas/modal.jpg"
+            src={photograph.src}
             alt=""
             aria-hidden
             fill
             sizes="544px"
-            className="object-cover"
+            className={objectFit(photograph.fit)}
           />
         </div>
 

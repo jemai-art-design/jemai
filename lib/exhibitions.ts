@@ -10,6 +10,7 @@ import {
   toDateField,
 } from "@/lib/admin/exhibitions";
 import { prisma } from "@/lib/prisma";
+import { siteImages, siteImageSrc } from "@/lib/site-images";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
 export type ExhibitionStatus = "upcoming" | "past";
@@ -69,22 +70,25 @@ export type UpNext = Pick<Exhibition, "slug" | "title" | "artist" | "ticket"> & 
   opensOn: string;
 };
 
-/** Stands in for a show whose photography has not been uploaded yet. */
-const PLACEHOLDER_HERO = "/figma/exhibitions/detail-hero.jpg";
+/**
+ * Stands in for a show whose photography has not been uploaded yet.
+ *
+ * A site image rather than a constant: the plate is seen on the indexes, on a
+ * show's own page and against the works listed on it, so which photograph it is
+ * belongs to the studio. Read once per request, since four of the reads below
+ * want it.
+ */
+const placeholderHero = () => siteImageSrc("exhibitions.fallback-hero");
 
 /** Where a show runs when the console left the field empty. */
 const DEFAULT_VENUE = "JEMAI Gallery, Lagos";
 
 /**
- * Three slides run behind both index heroes. These are the frames' own
- * photography rather than programme data — no exhibition owns the band, so it
- * stays a fixture here.
+ * The slides behind the two index heroes. No exhibition owns the band — it is
+ * the gallery's own photography, so it is a site image location rather than
+ * programme data, and it does not change as the programme does.
  */
-export const upcomingHero: Shot[] = [
-  { src: "/figma/exhibitions/hero-upcoming.jpg", alt: "A JEMAI gallery room hung with framed landscapes" },
-  { src: "/figma/artworks/hero.jpg", alt: "Visitors viewing framed works in the JEMAI gallery" },
-  { src: "/figma/home/ex-sculpture.jpg", alt: "A sculpture on a plinth in the gallery" },
-];
+export const upcomingHero = () => siteImages("exhibitions.upcoming-hero");
 
 const HIGHLIGHT_STILLS: Shot[] = [
   { src: "/figma/home/ex-slide-1.jpg", alt: "Visitor viewing a painted figure study" },
@@ -119,11 +123,7 @@ export const highlightShots = async (limit = 8): Promise<Shot[]> => {
   return [...shots, ...filler].slice(0, limit);
 };
 
-export const pastHero: Shot[] = [
-  { src: "/figma/exhibitions/hero-past.jpg", alt: "Three framed paintings on a deep red gallery wall" },
-  { src: "/figma/artworks/hero.jpg", alt: "Visitors viewing framed works in the JEMAI gallery" },
-  { src: "/figma/home/ex-slide-1.jpg", alt: "Visitors before a framed work in the gallery" },
-];
+export const pastHero = () => siteImages("exhibitions.past-hero");
 
 /** The console stores the long copy as plain text; blank lines are paragraphs. */
 const paragraphs = (copy: string) =>
@@ -184,7 +184,7 @@ const ticketFor = (record: Pick<DetailRecord, "paid" | "price">) =>
     ? { label: "General admission", price: naira(record.price) }
     : undefined;
 
-const toCard = (record: CardRecord): ExhibitionSummary => {
+const toCard = (placeholder: string, record: CardRecord): ExhibitionSummary => {
   const state = status(record.startDate, record.endDate);
   const run = formatDateSpan(toDateField(record.startDate), toDateField(record.endDate));
 
@@ -192,7 +192,7 @@ const toCard = (record: CardRecord): ExhibitionSummary => {
     slug: record.slug,
     title: record.name,
     cardMeta: state === "past" ? run : credit(record.artists) || run,
-    card: { src: record.thumbnail ?? PLACEHOLDER_HERO, alt: record.name },
+    card: { src: record.thumbnail ?? placeholder, alt: record.name },
     href: exhibitionHref(record.slug, state),
   };
 };
@@ -212,25 +212,31 @@ const cardColumns = {
  * the archive.
  */
 export const listUpcomingExhibitions = async (): Promise<ExhibitionSummary[]> => {
-  const records = await prisma.exhibition.findMany({
-    where: live(),
-    orderBy: { startDate: "asc" },
-    select: cardColumns,
-  });
-  return records.map(toCard);
+  const [records, placeholder] = await Promise.all([
+    prisma.exhibition.findMany({
+      where: live(),
+      orderBy: { startDate: "asc" },
+      select: cardColumns,
+    }),
+    placeholderHero(),
+  ]);
+  return records.map(toCard.bind(null, placeholder));
 };
 
 /** The archive, most recently closed first. */
 export const listPastExhibitions = async (): Promise<ExhibitionSummary[]> => {
-  const records = await prisma.exhibition.findMany({
-    where: ended(),
-    orderBy: { endDate: "desc" },
-    select: cardColumns,
-  });
-  return records.map(toCard);
+  const [records, placeholder] = await Promise.all([
+    prisma.exhibition.findMany({
+      where: ended(),
+      orderBy: { endDate: "desc" },
+      select: cardColumns,
+    }),
+    placeholderHero(),
+  ]);
+  return records.map(toCard.bind(null, placeholder));
 };
 
-const toDetail = (record: DetailRecord): ExhibitionDetail => {
+const toDetail = (placeholder: string, record: DetailRecord): ExhibitionDetail => {
   const startDate = toDateField(record.startDate);
   const [lead, ...body] = paragraphs(record.summary);
 
@@ -240,7 +246,7 @@ const toDetail = (record: DetailRecord): ExhibitionDetail => {
     artist: credit(record.artists),
     status: status(record.startDate, record.endDate),
     dates: formatDateSpan(startDate, toDateField(record.endDate)),
-    hero: record.thumbnail ?? PLACEHOLDER_HERO,
+    hero: record.thumbnail ?? placeholder,
     lead: lead ?? "",
     // The summary is one paragraph in practice, so the detail copy is the body;
     // anything the summary carried beyond its first paragraph leads it.
@@ -252,7 +258,7 @@ const toDetail = (record: DetailRecord): ExhibitionDetail => {
       alt: `${record.name} — installation view ${index + 1}`,
     })),
     works: record.featured.map(({ artwork }) => ({
-      src: artwork.thumbnail ?? artwork.gallery[0] ?? PLACEHOLDER_HERO,
+      src: artwork.thumbnail ?? artwork.gallery[0] ?? placeholder,
       alt: `${artwork.title}, ${artwork.year}`,
       title: artwork.title,
       year: artwork.year,
@@ -284,13 +290,13 @@ export const getExhibition = async (
   slug: string,
   state: ExhibitionStatus,
 ): Promise<ExhibitionDetail | null> => {
-  const record = await prisma.exhibition.findUnique({
-    where: { slug },
-    include: withDetail,
-  });
+  const [record, placeholder] = await Promise.all([
+    prisma.exhibition.findUnique({ where: { slug }, include: withDetail }),
+    placeholderHero(),
+  ]);
   if (!record || status(record.startDate, record.endDate) !== state) return null;
 
-  return toDetail(record);
+  return toDetail(placeholder, record);
 };
 
 /**
@@ -301,14 +307,17 @@ export const getExhibition = async (
  * a time the gallery never entered.
  */
 export const getUpNext = async (): Promise<UpNext | null> => {
-  const record = await prisma.exhibition.findFirst({
-    where: live(),
-    orderBy: { startDate: "asc" },
-    include: withDetail,
-  });
+  const [record, placeholder] = await Promise.all([
+    prisma.exhibition.findFirst({
+      where: live(),
+      orderBy: { startDate: "asc" },
+      include: withDetail,
+    }),
+    placeholderHero(),
+  ]);
   if (!record) return null;
 
-  const detail = toDetail(record);
+  const detail = toDetail(placeholder, record);
   const venue = record.venue || DEFAULT_VENUE;
 
   return {
@@ -319,7 +328,7 @@ export const getUpNext = async (): Promise<UpNext | null> => {
     eyebrow: "Up next",
     copy: detail.lead,
     image: {
-      src: record.thumbnail ?? PLACEHOLDER_HERO,
+      src: record.thumbnail ?? placeholder,
       alt: detail.title,
     },
     venue,

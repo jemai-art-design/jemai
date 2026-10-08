@@ -8,6 +8,7 @@ import { SeasonClosed } from "@/components/christmas/season-closed";
 import { SeasonIntro } from "@/components/christmas/season-intro";
 import { christmasSlotsLeft, currentChristmasYear } from "@/lib/admin/christmas";
 import { seasonCapacity } from "@/lib/christmas";
+import { siteImage } from "@/lib/site-images";
 
 export const metadata: Metadata = {
   title: "Christmas Styling | JEMAI",
@@ -51,7 +52,12 @@ const steps = [
 ];
 
 const ChristmasStylingPage = async () => {
-  const available = await christmasSlotsLeft(currentChristmasYear());
+  const [available, garland, reindeer, confirmation] = await Promise.all([
+    christmasSlotsLeft(currentChristmasYear()),
+    siteImage("christmas.garland"),
+    siteImage("christmas.reindeer"),
+    siteImage("christmas.confirmation"),
+  ]);
   const open = available > 0;
 
   return (
@@ -122,6 +128,9 @@ const ChristmasStylingPage = async () => {
           heading="Request A Christmas Consultation"
           copy="Submit your details and selected spaces. This is a consultation request, not a confirmed appointment or payment."
           footnote="Our team will contact you within 24 hours to discuss your brief, confirm the scope and arrange quotation and payment. No payment is collected on this page."
+          garland={garland}
+          reindeer={reindeer}
+          confirmation={confirmation}
         />
       ) : (
         <SeasonClosed

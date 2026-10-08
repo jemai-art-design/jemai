@@ -28,6 +28,7 @@ import {
   type Outcome,
 } from "@/components/christmas/outcome-modal";
 import { decorationAreas, propertyTypes } from "@/lib/christmas";
+import { objectFit, type SiteImage } from "@/lib/site-image-slots";
 import { cn } from "@/lib/utils";
 
 export type RequestValues = {
@@ -71,6 +72,14 @@ type RequestFormProps = {
   heading: string;
   copy: string;
   footnote: string;
+  /**
+   * The band's festive dressing and the photograph on the panel that closes it.
+   * They are read on the page rather than here because this is a client
+   * component and the site-image store carries Prisma.
+   */
+  garland: SiteImage;
+  reindeer: SiteImage;
+  confirmation: SiteImage;
 };
 
 /**
@@ -90,6 +99,9 @@ export const RequestForm = ({
   heading,
   copy,
   footnote,
+  garland,
+  reindeer,
+  confirmation,
 }: RequestFormProps) => {
   const { register, control, handleSubmit, reset } = useForm<RequestValues>({
     defaultValues: { propertyType: "", name: "", email: "", phone: "" },
@@ -142,17 +154,17 @@ export const RequestForm = ({
       className="bg-surface-subtle relative w-full overflow-hidden px-4 pb-20 sm:px-6 lg:pb-31"
     >
       <Image
-        src="/figma/christmas/garland.png"
+        src={garland.src}
         alt=""
         aria-hidden
         width={1440}
         height={254}
         unoptimized
-        className="pointer-events-none absolute top-0 left-1/2 w-full min-w-180 -translate-x-1/2 select-none"
+        className={`pointer-events-none absolute top-0 left-1/2 w-full min-w-180 -translate-x-1/2 select-none ${objectFit(garland.fit)}`}
       />
 
       <Ornament
-        src="/figma/christmas/reindeer.png"
+        image={reindeer}
         width={140}
         height={167}
         className="right-0 bottom-0"
@@ -322,6 +334,7 @@ export const RequestForm = ({
       <OutcomeModal
         outcome={outcome}
         onOpenChange={(open) => !open && setOutcome(null)}
+        photograph={confirmation}
       />
     </section>
   );

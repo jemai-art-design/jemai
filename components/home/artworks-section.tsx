@@ -6,6 +6,8 @@ import {
 } from "@/components/site/curator-carousel";
 import { curatedArtworks } from "@/lib/artworks";
 import type { CuratedArtwork } from "@/lib/gallery";
+import { objectFit } from "@/lib/site-image-slots";
+import { siteImage } from "@/lib/site-images";
 
 const toPick = (artwork: CuratedArtwork): CuratorPick => ({
   title: artwork.title,
@@ -17,7 +19,10 @@ const toPick = (artwork: CuratedArtwork): CuratorPick => ({
 });
 
 export const ArtworksSection = async () => {
-  const picks = (await curatedArtworks(3)).map(toPick);
+  const [picks, backdrop] = await Promise.all([
+    curatedArtworks(3).then((artworks) => artworks.map(toPick)),
+    siteImage("home.art-backdrop"),
+  ]);
 
   return (
     <section className="flex w-full flex-col items-center">
@@ -38,11 +43,11 @@ export const ArtworksSection = async () => {
       <div className="relative w-full bg-white">
         <div className="relative flex min-h-130 w-full flex-col justify-center px-4 sm:px-6 lg:h-155.25 lg:px-page-gutter">
           <Image
-            src="/figma/home/art-gallery.jpg"
-            alt=""
+            src={backdrop.src}
+            alt={backdrop.alt}
             fill
             sizes="100vw"
-            className="object-cover"
+            className={objectFit(backdrop.fit)}
           />
           <div
             aria-hidden

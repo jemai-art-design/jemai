@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CheckoutView } from "@/components/checkout/checkout-view";
+import { siteImageSrc } from "@/lib/site-images";
 
 export const metadata: Metadata = {
   title: "Checkout — JEMAI",
@@ -8,9 +9,9 @@ export const metadata: Metadata = {
     "Confirm your delivery details and place your JEMAI order. All transactions are secure and encrypted.",
 };
 
-const CheckoutPage = () => (
+const CheckoutPage = async () => (
   <Suspense>
-    <CheckoutView />
+    <CheckoutView placeholder={await siteImageSrc("shared.furniture-placeholder")} />
   </Suspense>
 );
 

@@ -36,7 +36,12 @@ type Outcome = {
   number: string;
 };
 
-export const CheckoutView = () => {
+/**
+ * `placeholder` is the furniture fallback plate, read on the page and handed
+ * down: the confirmation panel features one line of the bag, and a piece with
+ * no photography of its own has to show something.
+ */
+export const CheckoutView = ({ placeholder }: { placeholder: string; }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reference = searchParams.get("reference");
@@ -183,7 +188,7 @@ export const CheckoutView = () => {
         onOpenChange={(open) => !open && dismiss()}
         feature={{
           name: feature?.name ?? "Your order",
-          image: feature?.image ?? "/figma/home/p-mila.png",
+          image: feature?.image ?? placeholder,
         }}
         orderReference={settled?.number ?? reference ?? ""}
         pieceCount={placed?.pieceCount ?? count}

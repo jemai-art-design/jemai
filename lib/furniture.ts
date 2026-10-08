@@ -11,12 +11,17 @@ import {
   type ProductVariant,
 } from "@/lib/products";
 import { MAX_VARIANT_IMAGES } from "@/lib/constants";
+import { siteImageSrc } from "@/lib/site-images";
 import { furnitureCategoryNames } from "@/lib/taxonomy";
 import { cleanText } from "@/lib/utils";
 import type { Product } from "@/components/site/product-card";
 
-/** Stands in for a product whose imagery has not been uploaded yet. */
-const PLACEHOLDER_IMAGE = "/figma/home/p-mila.png";
+/**
+ * Stands in for a product whose imagery has not been uploaded yet. A site image
+ * rather than a constant: it is seen on the catalogue, the home rail, the
+ * product page and the cart, so the plate is the studio's to choose.
+ */
+const placeholder = () => siteImageSrc("shared.furniture-placeholder");
 
 const SWATCHES: Record<string, string> = {
   cream: "#efe7db",
@@ -67,14 +72,14 @@ type FurnitureRecord = Prisma.FurnitureGetPayload<{ include: typeof withRelation
  * own shots in authoring order, de-duplicated — sibling rows that share a colour
  * usually carry the same pictures.
  */
-const images = (record: FurnitureRecord) => {
+const images = (plate: string, record: FurnitureRecord) => {
   const sources = [
     ...new Set([
       ...(record.thumbnail ? [record.thumbnail] : []),
       ...record.variants.flatMap((variant) => variant.images),
     ]),
   ];
-  return sources.length ? sources : [PLACEHOLDER_IMAGE];
+  return sources.length ? sources : [plate];
 };
 
 /**
@@ -104,7 +109,7 @@ const inStock = (record: FurnitureRecord) =>
     ? record.variants.some((variant) => variant.quantity > 0)
     : record.stock > 0;
 
-const toCatalogueProduct = (record: FurnitureRecord): CatalogueProduct => ({
+const toCatalogueProduct = (plate: string, record: FurnitureRecord): CatalogueProduct => ({
   id: record.id,
   name: record.name,
   category: record.category,
@@ -113,16 +118,16 @@ const toCatalogueProduct = (record: FurnitureRecord): CatalogueProduct => ({
   inStock: inStock(record),
   amount: priceRange(record).low,
   price: headline(record, naira),
-  image: images(record)[0],
+  image: images(plate, record)[0],
   href: `/furniture/${record.slug}`,
 });
 
 /** The card shape the home rail and the related row draw. */
-const toCard = (record: FurnitureRecord): Product => ({
+const toCard = (plate: string, record: FurnitureRecord): Product => ({
   name: record.name,
   category: record.category,
   price: headline(record, naira),
-  image: images(record)[0],
+  image: images(plate, record)[0],
   href: `/furniture/${record.slug}`,
 });
 
@@ -132,11 +137,14 @@ const toCard = (record: FurnitureRecord): Product => ({
  * fixed vocabulary, so a filter can never come up empty.
  */
 export const loadCatalogue = async () => {
-  const records = await prisma.furniture.findMany({
-    include: withRelations,
-    orderBy: { createdAt: "desc" },
-  });
-  const products = records.map(toCatalogueProduct);
+  const [records, plate] = await Promise.all([
+    prisma.furniture.findMany({
+      include: withRelations,
+      orderBy: { createdAt: "desc" },
+    }),
+    placeholder(),
+  ]);
+  const products = records.map(toCatalogueProduct.bind(null, plate));
 
   return {
     products,
@@ -166,19 +174,22 @@ export const listFurnitureCategories = async (): Promise<string[]> => {
 
 /** The four pieces the home page leads with — the newest in the catalogue. */
 export const featuredFurniture = async (limit = 4): Promise<Product[]> => {
-  const records = await prisma.furniture.findMany({
-    include: withRelations,
-    orderBy: { createdAt: "desc" },
-    take: limit,
-  });
-  return records.map(toCard);
+  const [records, plate] = await Promise.all([
+    prisma.furniture.findMany({
+      include: withRelations,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    }),
+    placeholder(),
+  ]);
+  return records.map(toCard.bind(null, plate));
 };
 
 export const getFurnitureDetail = async (slug: string): Promise<ProductDetail | null> => {
-  const record = await prisma.furniture.findUnique({
-    where: { slug },
-    include: withRelations,
-  });
+  const [record, plate] = await Promise.all([
+    prisma.furniture.findUnique({ where: { slug }, include: withRelations }),
+    placeholder(),
+  ]);
   if (!record) return null;
 
   // Both axes come off the variant rows in authoring order, de-duplicated: the
@@ -234,7 +245,7 @@ export const getFurnitureDetail = async (slug: string): Promise<ProductDetail | 
         stock: matches.reduce((total, variant) => total + variant.quantity, 0),
         // Falls back to the piece's own rail for a row saved before imagery
         // moved onto the variants, so no combination draws an empty frame.
-        images: (shots.length ? shots : images(record)).slice(0, MAX_VARIANT_IMAGES),
+        images: (shots.length ? shots : images(plate, record)).slice(0, MAX_VARIANT_IMAGES),
       };
     }),
   );
@@ -250,7 +261,7 @@ export const getFurnitureDetail = async (slug: string): Promise<ProductDetail | 
     // authoring order behind the thumbnail. Picking a combination slides to its
     // own shots, so the rest of the range has to still be in the rail to slide
     // through. Never empty — `images` falls back to the placeholder.
-    gallery: images(record),
+    gallery: images(plate, record),
     colourway,
     sizes: axes,
     variants,
@@ -273,15 +284,18 @@ export const relatedFurniture = async (slug: string, limit = 4): Promise<Product
     select: { category: true },
   });
 
-  const records = await prisma.furniture.findMany({
-    where: { slug: { not: slug } },
-    include: withRelations,
-    orderBy: { createdAt: "desc" },
-    take: limit * 3,
-  });
+  const [records, plate] = await Promise.all([
+    prisma.furniture.findMany({
+      where: { slug: { not: slug } },
+      include: withRelations,
+      orderBy: { createdAt: "desc" },
+      take: limit * 3,
+    }),
+    placeholder(),
+  ]);
 
   const sameCategory = records.filter((item) => item.category === record?.category);
   const rest = records.filter((item) => item.category !== record?.category);
 
-  return [...sameCategory, ...rest].slice(0, limit).map(toCard);
+  return [...sameCategory, ...rest].slice(0, limit).map(toCard.bind(null, plate));
 };

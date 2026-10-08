@@ -4,13 +4,20 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { objectFit, type SiteImage } from "@/lib/site-image-slots";
 import { cn } from "@/lib/utils";
 
 export type HeroSlide = {
-  eyebrow: string;
-  title: string;
-  cta: { label: string; href: string; };
-  image: { src: string; alt: string; };
+  /**
+   * The lines drawn over the photograph. Absent on a slide the console has
+   * added: the four the site ships with are the ones the page writes copy for,
+   * and an extra photograph is drawn on its own rather than borrowing a
+   * headline and a button that point somewhere it has nothing to do with.
+   */
+  eyebrow?: string;
+  title?: string;
+  cta?: { label: string; href: string; };
+  image: SiteImage;
 };
 
 type HeroCarouselProps = {
@@ -53,14 +60,15 @@ export const HeroCarousel = ({ slides, interval = 6000 }: HeroCarouselProps) => 
     >
       {slides.map((slide, slideIndex) => (
         <Image
-          key={slide.image.src}
+          key={slide.image.key}
           src={slide.image.src}
           alt={slide.image.alt}
           fill
           priority={slideIndex === 0}
           sizes="100vw"
           className={cn(
-            "object-cover transition-opacity duration-700",
+            objectFit(slide.image.fit),
+            "transition-opacity duration-700",
             slideIndex === index ? "opacity-100" : "opacity-0",
           )}
         />
@@ -74,20 +82,26 @@ export const HeroCarousel = ({ slides, interval = 6000 }: HeroCarouselProps) => 
           key={index}
           className="animate-in fade-in flex max-w-200 flex-col items-center gap-2 duration-500"
         >
-          <p className="text-eyebrow-lg uppercase text-white/80">
-            {slides[index].eyebrow}
-          </p>
-          <h1 className="font-heading text-3xl leading-tight tracking-[0.02em] text-white sm:text-5xl sm:leading-[1.06] lg:text-display">
-            {slides[index].title}
-          </h1>
-          <Button
-            asChild
-            size="cta"
-            variant="outline"
-            className="border-border-inverse text-text-inverse mt-2 min-w-37 bg-transparent hover:bg-white/10 hover:text-white"
-          >
-            <Link href={slides[index].cta.href}>{slides[index].cta.label}</Link>
-          </Button>
+          {slides[index].eyebrow ? (
+            <p className="text-eyebrow-lg uppercase text-white/80">
+              {slides[index].eyebrow}
+            </p>
+          ) : null}
+          {slides[index].title ? (
+            <h1 className="font-heading text-3xl leading-tight tracking-[0.02em] text-white sm:text-5xl sm:leading-[1.06] lg:text-display">
+              {slides[index].title}
+            </h1>
+          ) : null}
+          {slides[index].cta ? (
+            <Button
+              asChild
+              size="cta"
+              variant="outline"
+              className="border-border-inverse text-text-inverse mt-2 min-w-37 bg-transparent hover:bg-white/10 hover:text-white"
+            >
+              <Link href={slides[index].cta!.href}>{slides[index].cta!.label}</Link>
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -119,7 +133,7 @@ export const HeroCarousel = ({ slides, interval = 6000 }: HeroCarouselProps) => 
       >
         {slides.map((slide, slideIndex) => (
           <Button
-            key={slide.image.src}
+            key={slide.image.key}
             type="button"
             role="tab"
             variant="quiet"

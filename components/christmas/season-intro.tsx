@@ -4,6 +4,7 @@ import {
   type Capacity,
 } from "@/components/christmas/capacity-card";
 import { Ornament } from "@/components/christmas/ornament";
+import { siteImage } from "@/lib/site-images";
 
 type SeasonIntroProps = {
   eyebrow: string;
@@ -20,44 +21,56 @@ type SeasonIntroProps = {
  * 1080px measure: a 466px column, a 67px gutter and the 548px card, both halves
  * centred against each other.
  */
-export const SeasonIntro = ({
+export const SeasonIntro = async ({
   eyebrow,
   heading,
   paragraphs,
   capacity,
   cardCopy,
   cardCta,
-}: SeasonIntroProps) => (
-  <section className="w-full overflow-hidden px-4 py-16 sm:px-6 lg:px-page-gutter lg:py-0">
-    <div className="relative mx-auto flex w-full max-w-270 flex-col items-center gap-10 lg:min-h-188 lg:flex-row lg:gap-16.75">
-      <Ornament
-        src="/figma/christmas/wreath.png"
-        width={180}
-        height={126}
-        className="top-0 -right-45"
-      />
+}: SeasonIntroProps) => {
+  const [wreath, plate] = await Promise.all([
+    siteImage("christmas.wreath"),
+    siteImage("christmas.capacity-frame"),
+  ]);
 
-      <div className="flex w-full flex-col lg:max-w-116.5 lg:flex-1">
-        <Eyebrow>{eyebrow}</Eyebrow>
+  return (
+    <section className="w-full overflow-hidden px-4 py-16 sm:px-6 lg:px-page-gutter lg:py-0">
+      <div className="relative mx-auto flex w-full max-w-270 flex-col items-center gap-10 lg:min-h-188 lg:flex-row lg:gap-16.75">
+        <Ornament
+          image={wreath}
+          width={180}
+          height={126}
+          className="top-0 -right-45"
+        />
 
-        <h2 className="font-heading text-text-primary mt-2.5 text-4xl sm:text-5xl lg:text-display">
-          {heading.map((line) => (
-            <span key={line} className="block">
-              {line}
-            </span>
+        <div className="flex w-full flex-col lg:max-w-116.5 lg:flex-1">
+          <Eyebrow>{eyebrow}</Eyebrow>
+
+          <h2 className="font-heading text-text-primary mt-2.5 text-4xl sm:text-5xl lg:text-display">
+            {heading.map((line) => (
+              <span key={line} className="block">
+                {line}
+              </span>
+            ))}
+          </h2>
+
+          {paragraphs.map((paragraph) => (
+            <p key={paragraph} className="text-body text-text-secondary mt-3">
+              {paragraph}
+            </p>
           ))}
-        </h2>
+        </div>
 
-        {paragraphs.map((paragraph) => (
-          <p key={paragraph} className="text-body text-text-secondary mt-3">
-            {paragraph}
-          </p>
-        ))}
+        <div className="flex w-full justify-center lg:w-137 lg:shrink-0">
+          <CapacityCard
+            capacity={capacity}
+            copy={cardCopy}
+            cta={cardCta}
+            plate={plate}
+          />
+        </div>
       </div>
-
-      <div className="flex w-full justify-center lg:w-137 lg:shrink-0">
-        <CapacityCard capacity={capacity} copy={cardCopy} cta={cardCta} />
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};

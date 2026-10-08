@@ -1,11 +1,12 @@
 import Image from "next/image";
+import { objectFit, type SiteImage } from "@/lib/site-image-slots";
 
 type FounderNoteProps = {
   heading: string;
   paragraphs: string[];
   closing: string;
   signature: string;
-  photograph: { src: string; alt: string };
+  photograph: SiteImage;
 };
 
 /**
@@ -32,10 +33,11 @@ type FounderNoteProps = {
  *   colour.
  * - Paragraph gaps are 12px; the signature sits 44px below "With warmth,".
  *
- * **The photograph is a stand-in.** The frame's own image is only available
+ * **The photograph was a stand-in.** The frame's own image is only available
  * inside the export with the scrim *and the baked text* over it, and the text
- * crosses a brightly lit painting, so it cannot be recovered without leaving a
- * smear. Swap in the real export when it lands.
+ * crosses a brightly lit painting, so it could not be recovered without leaving
+ * a smear. It is the `about.founder` site-image location now, so the real one
+ * goes in through the console rather than through a commit.
  */
 export const FounderNote = ({
   heading,
@@ -50,7 +52,7 @@ export const FounderNote = ({
       alt={photograph.alt}
       fill
       sizes="100vw"
-      className="object-cover"
+      className={objectFit(photograph.fit)}
     />
 
     <div className="bg-surface-inverse/87 relative mt-40 flex flex-col gap-3 px-4 py-10 sm:mt-56 sm:px-6 lg:absolute lg:top-16 lg:bottom-0 lg:left-page-gutter lg:mt-0 lg:w-169.5 lg:p-12">

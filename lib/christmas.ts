@@ -8,7 +8,6 @@
 export type DecorationArea = {
   name: string;
   caption: string;
-  photo: string;
   /**
    * Room-based areas are counted; a compound is not. This is what decides
    * whether a selection adds a quantity row under the chips.
@@ -16,29 +15,30 @@ export type DecorationArea = {
   counted: boolean;
 };
 
+/**
+ * The photography for these lives in the `christmas.spaces` site-image
+ * location, in this same order, because it is the studio's to change — see
+ * `lib/site-image-slots`.
+ */
 export const decorationAreas: DecorationArea[] = [
   {
     name: "Exterior & Compound",
     caption: "The arrival, frontage and outdoor spaces that set the first note.",
-    photo: "/figma/christmas/spaces/exterior.jpg",
     counted: false,
   },
   {
     name: "Living + Dining",
     caption: "The shared rooms where people gather around food and conversation.",
-    photo: "/figma/christmas/spaces/living-dining.jpg",
     counted: true,
   },
   {
     name: "Bedrooms",
     caption: "A quieter festive language for private rooms and overnight guests.",
-    photo: "/figma/christmas/spaces/bedrooms.jpg",
     counted: true,
   },
   {
     name: "Kitchen",
     caption: "Thoughtful details for the room at the heart of Christmas preparation.",
-    photo: "/figma/christmas/spaces/kitchen.jpg",
     counted: true,
   },
 ];

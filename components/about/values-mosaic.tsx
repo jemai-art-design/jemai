@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { objectFit, type SiteImage } from "@/lib/site-image-slots";
 
 export type Value = {
   label: string;
@@ -10,7 +11,8 @@ type ValuesMosaicProps = {
   intro: string;
   values: Value[];
   closing: string;
-  images: { src: string; alt: string; }[];
+  /** Four, in mosaic order: beside the values panel, the pair, then the last. */
+  images: SiteImage[];
 };
 
 export const ValuesMosaic = ({
@@ -50,20 +52,20 @@ export const ValuesMosaic = ({
           alt={images[0].alt}
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"
-          className="object-cover"
+          className={objectFit(images[0].fit)}
         />
       </div>
     </div>
 
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[648fr_648fr]">
       {images.slice(1, 3).map((image) => (
-        <div key={image.src} className="relative aspect-square w-full">
+        <div key={image.key} className="relative aspect-square w-full">
           <Image
             src={image.src}
             alt={image.alt}
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
-            className="object-cover"
+            className={objectFit(image.fit)}
           />
         </div>
       ))}
@@ -76,7 +78,7 @@ export const ValuesMosaic = ({
           alt={images[3].alt}
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"
-          className="object-cover"
+          className={objectFit(images[3].fit)}
         />
       </div>
       <div className="bg-surface-subtle flex items-center p-6 sm:p-stack-loose lg:aspect-square">
