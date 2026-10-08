@@ -1,7 +1,11 @@
 import { v2 as cloudinary } from "cloudinary";
 import * as Yup from "yup";
 
-import { ALLOWED_IMAGE_FORMATS, CLOUDINARY_FOLDER } from "@/lib/constants";
+import {
+  ALLOWED_IMAGE_FORMATS,
+  CLOUDINARY_FOLDER,
+  SITE_IMAGE_FOLDER,
+} from "@/lib/constants";
 import env from "@/lib/env";
 
 const CONNECTION = /^cloudinary:\/\/([^:@/]+):([^:@/]+)@([^:@/]+)$/;
@@ -72,7 +76,38 @@ export const uploadImage = async (file: File) => {
  * bytes, CDN copies purged.
  */
 export const siteImagePublicId = (slot: string, key: string) =>
-  `${CLOUDINARY_FOLDER}/site/${slot.replace(/\./g, "/")}/${key}`;
+  `${SITE_IMAGE_FOLDER}/${slot.replace(/\./g, "/")}/${key}`;
+
+/**
+ * The terms every site image goes up on, however it got here — through the
+ * console or through `scripts/upload-site-images.ts`. One definition, because
+ * the two writing the same id on different terms is how a seeded default and a
+ * replacement for it end up as two assets.
+ */
+const siteImageOptions = (slot: string, key: string) => ({
+  public_id: siteImagePublicId(slot, key),
+  // The id is the whole path, so the folder must not be prepended again, and
+  // neither the picked file's name nor a uniquifying suffix may be allowed to
+  // move it.
+  use_filename: false,
+  unique_filename: false,
+  overwrite: true,
+  // Purges the CDN copies of the id being written over. Without it the old
+  // photograph is served from the edge for hours after the swap.
+  invalidate: true,
+  allowed_formats: ALLOWED_IMAGE_FORMATS.split(","),
+  resource_type: "image" as const,
+});
+
+/**
+ * The URL carries the asset's version, so it changes on every overwrite —
+ * which is what gets the new picture past Next's image cache as well as the
+ * browser's.
+ */
+const uploadedUrl = (secureUrl: string | undefined) => {
+  if (!secureUrl) throw new Error("Cloudinary returned no URL for the upload");
+  return secureUrl;
+};
 
 /**
  * Puts a picture in a site image location, over whatever was there.
@@ -88,33 +123,33 @@ export const uploadSiteImage = async (file: File, slot: string, key: string) => 
 
   return new Promise<string>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      {
-        public_id: siteImagePublicId(slot, key),
-        // The id is the whole path, so the folder must not be prepended again,
-        // and neither the picked file's name nor a uniquifying suffix may be
-        // allowed to move it.
-        use_filename: false,
-        unique_filename: false,
-        overwrite: true,
-        // Purges the CDN copies of the id being written over. Without it the
-        // old photograph is served from the edge for hours after the swap.
-        invalidate: true,
-        allowed_formats: ALLOWED_IMAGE_FORMATS.split(","),
-        resource_type: "image",
-      },
+      siteImageOptions(slot, key),
       (error, result) => {
         if (error) return reject(error);
-        if (!result?.secure_url)
-          return reject(new Error("Cloudinary returned no URL for the upload"));
-        // The URL carries the asset's version, so it changes on every
-        // overwrite — which is what gets the new picture past Next's image
-        // cache as well as the browser's.
-        resolve(result.secure_url);
+        try {
+          resolve(uploadedUrl(result?.secure_url));
+        } catch (failure) {
+          reject(failure);
+        }
       },
     );
 
     stream.end(bytes);
   });
+};
+
+/**
+ * The same upload from a file on disk, which is what the seeding script has —
+ * it is reading `public/`, not a multipart body.
+ */
+export const uploadSiteImageFile = async (
+  path: string,
+  slot: string,
+  key: string,
+) => {
+  configure();
+  const result = await cloudinary.uploader.upload(path, siteImageOptions(slot, key));
+  return uploadedUrl(result.secure_url);
 };
 
 /**

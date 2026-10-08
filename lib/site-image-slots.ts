@@ -21,6 +21,8 @@
  * that record's own screen.
  */
 
+import uploadedDefaults from "@/lib/site-image-defaults.json";
+
 /** Whether a picture fills its box or sits whole inside it. */
 export type ImageFit = "cover" | "contain";
 
@@ -111,7 +113,16 @@ export const siteImagePages: SiteImagePage[] = [
   },
 ];
 
-export const siteImageSlots: SiteImageSlotMeta[] = [
+/**
+ * Every location, with the photograph the repository itself holds for it.
+ *
+ * These `src` values are paths under `public/`, and they are what
+ * `scripts/upload-site-images.ts` reads when it seeds Cloudinary. Keeping them
+ * here rather than replacing them with the hosted URLs is what lets the script
+ * be re-run against a fresh cloud — the repository stays the original, and the
+ * cloud is a copy of it.
+ */
+export const shippedSiteImageSlots: SiteImageSlotMeta[] = [
   /* ── Home ─────────────────────────────────────────────────────────────── */
   {
     slot: "home.hero",
@@ -566,6 +577,34 @@ export const siteImageSlots: SiteImageSlotMeta[] = [
     ],
   },
 ];
+
+/**
+ * Where the shipped photography has been uploaded to, written by
+ * `scripts/upload-site-images.ts` and keyed `"<slot>/<key>"`.
+ *
+ * Empty until the script is first run, which is deliberate: an unseeded
+ * checkout draws the files in `public/` and works offline, and every entry
+ * that lands here is one more file that can leave the repository.
+ */
+const hosted: Record<string, string> = uploadedDefaults;
+
+/**
+ * The locations as the site draws them — the shipped list with the hosted URL
+ * laid over any picture that has one.
+ *
+ * The overlay is here rather than baked into the list above so that seeding the
+ * cloud is a one-file diff an author can read, instead of thirty `src` strings
+ * rewritten by a script in the middle of prose.
+ */
+export const siteImageSlots: SiteImageSlotMeta[] = shippedSiteImageSlots.map(
+  (meta) => ({
+    ...meta,
+    defaults: meta.defaults.map((image) => ({
+      ...image,
+      src: hosted[`${meta.slot}/${image.key}`] ?? image.src,
+    })),
+  }),
+);
 
 /** The locations a tab lists, in registry order. */
 export const slotsForPage = (page: string) =>

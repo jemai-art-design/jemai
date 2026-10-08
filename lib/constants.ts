@@ -51,6 +51,19 @@ export const ALLOWED_IMAGE_FORMATS = "jpg,jpeg,png,webp";
  */
 export const CLOUDINARY_FOLDER = "jemai";
 
+/**
+ * Where the storefront's own static photography lives — the heroes, tile sets
+ * and plates the Site images screen manages.
+ *
+ * Its own top-level folder rather than a subfolder of the one above, because
+ * the two hold different kinds of thing: `jemai` is the record photography an
+ * author uploads against a product, a work or a show, and grows with the
+ * catalogue. This one holds one asset per place the site draws a fixed
+ * picture, so it is the size of the site and does not grow at all — every
+ * upload lands on a deterministic id and writes over what was there.
+ */
+export const SITE_IMAGE_FOLDER = "site-images";
+
 /** The `accept` attribute on the file input, so the OS dialog filters too. */
 export const ALLOWED_IMAGE_ACCEPT = ALLOWED_IMAGE_TYPES.join(",");
 
