@@ -606,10 +606,6 @@ export const siteImageSlots: SiteImageSlotMeta[] = shippedSiteImageSlots.map(
   }),
 );
 
-/** The locations a tab lists, in registry order. */
-export const slotsForPage = (page: string) =>
-  siteImageSlots.filter((slot) => slot.page === page);
-
 export const findSiteImageSlot = (slot: string) =>
   siteImageSlots.find((entry) => entry.slot === slot);
 

@@ -80,6 +80,3 @@ export const christmasStatuses = [
 ] as const;
 
 export type ChristmasStatus = (typeof christmasStatuses)[number];
-
-export const isChristmasStatus = (value: string): value is ChristmasStatus =>
-  (christmasStatuses as readonly string[]).includes(value);

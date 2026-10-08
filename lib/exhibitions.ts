@@ -90,39 +90,6 @@ const DEFAULT_VENUE = "JEMAI Gallery, Lagos";
  */
 export const upcomingHero = () => siteImages("exhibitions.upcoming-hero");
 
-const HIGHLIGHT_STILLS: Shot[] = [
-  { src: "/figma/home/ex-slide-1.jpg", alt: "Visitor viewing a painted figure study" },
-  { src: "/figma/home/ex-slide-2.jpg", alt: "A guest studying a portrait in the gallery" },
-  { src: "/figma/home/ex-slide-3.jpg", alt: "Bronze figures on a plinth" },
-  { src: "/figma/home/ex-slide-4.jpg", alt: "Painted works hung salon style" },
-];
-
-export const highlightShots = async (limit = 8): Promise<Shot[]> => {
-  const records = await prisma.exhibition.findMany({
-    where: { NOT: { gallery: { isEmpty: true } } },
-    orderBy: { startDate: "desc" },
-    select: { name: true, gallery: true },
-    take: limit,
-  });
-
-  const shots: Shot[] = [];
-  const seen = new Set<string>();
-  const deepest = Math.max(0, ...records.map((record) => record.gallery.length));
-
-  for (let view = 0; view < deepest; view += 1) {
-    for (const record of records) {
-      const src = record.gallery[view];
-      if (!src || seen.has(src)) continue;
-      seen.add(src);
-      shots.push({ src, alt: `${record.name} — installation view ${view + 1}` });
-    }
-  }
-
-  const filler = HIGHLIGHT_STILLS.filter((shot) => !seen.has(shot.src));
-
-  return [...shots, ...filler].slice(0, limit);
-};
-
 export const pastHero = () => siteImages("exhibitions.past-hero");
 
 /** The console stores the long copy as plain text; blank lines are paragraphs. */

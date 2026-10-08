@@ -38,7 +38,7 @@ const readOverrides = cache(async (): Promise<Map<string, SiteImage[]>> => {
  * will be the first time a hole is added to the design. An open carousel is the
  * stored order, since there it is the author's arrangement.
  */
-export const resolveSiteImages = (
+const resolveSiteImages = (
   meta: SiteImageSlotMeta,
   stored: SiteImage[] | undefined,
 ): SiteImage[] => {
