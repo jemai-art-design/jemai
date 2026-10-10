@@ -35,7 +35,7 @@ const AdminExhibitionEditPage = async ({
     summary: exhibition.summary,
     content: exhibition.content,
     thumbnail: exhibition.thumbnail ? [toContentAsset(exhibition.thumbnail)] : [],
-    media: exhibition.media.map(toContentAsset),
+    media: exhibition.media.map((src) => toContentAsset(src)),
     featured: exhibition.featured,
   };
 

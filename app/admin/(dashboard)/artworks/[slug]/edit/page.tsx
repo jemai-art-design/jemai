@@ -34,7 +34,7 @@ const AdminArtworkEditPage = async ({ params }: PageProps<"/admin/artworks/[slug
     story: artwork.story,
     curatorsPick: artwork.curatorsPick,
     thumbnail: artwork.thumbnail ? [toContentAsset(artwork.thumbnail)] : [],
-    media: artwork.media.map(toContentAsset),
+    media: artwork.media.map((src) => toContentAsset(src)),
   };
 
   return (

@@ -13,7 +13,7 @@ import {
   toProjectInput,
   updateProject,
 } from "@/lib/admin/projects";
-import { imageAssetSchema } from "@/lib/cloudinary";
+import { projectMediaSchema } from "@/lib/cloudinary";
 
 const requireChristmasProjectAccess = async (): Promise<ActionResult<string>> => {
   const session = await readActiveAdmin();
@@ -31,14 +31,14 @@ const christmasProjectPayload = () =>
     summary: Yup.string().trim().default(""),
     description: Yup.string().trim().default(""),
     /**
-     * The photographs, each with its own alt text. The list may be empty — a
+     * The media, each entry with its own alt text. The list may be empty — a
      * season is written up long after it is over, and a record still waiting on
      * its shots is saved rather than refused. It simply draws nothing on the
      * Christmas page until it has a first one.
      */
-    images: Yup
+    media: Yup
       .array(
-        imageAssetSchema.shape({
+        projectMediaSchema.shape({
           alt: Yup.string().trim().default(""),
         }),
       )

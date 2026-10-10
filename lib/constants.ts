@@ -19,11 +19,12 @@ export const MAX_IMAGE_UPLOAD_TOTAL_BYTES = MAX_IMAGE_UPLOAD_TOTAL_MB * 1024 * 1
 export const MAX_GALLERY_IMAGES = 12;
 
 /**
- * A design project's photography. A finished job is documented room by room, so
- * the ceiling is far above a catalogue gallery's dozen — pictures go up in
- * batches, since the total-size rule still caps any one pick.
+ * A design project's media. A finished job is documented room by room, so the
+ * ceiling is far above a catalogue gallery's dozen — pictures go up in batches,
+ * since the total-size rule still caps any one pick. Films and embeds share the
+ * count: it is one ordered list, and the lightbox walks all of it.
  */
-export const MAX_PROJECT_IMAGES = 48;
+export const MAX_PROJECT_MEDIA = 48;
 
 /**
  * A furniture variant's own shots. The detail frame swaps the whole rail when a
@@ -33,6 +34,17 @@ export const MAX_PROJECT_IMAGES = 48;
 export const MIN_VARIANT_IMAGES = 1;
 
 export const MAX_VARIANT_IMAGES = 3;
+
+/**
+ * A project film. Far above the picture ceiling because a walkthrough simply is
+ * that size — which is also why a film does not go through a server action: it
+ * is signed here and posted straight to Cloudinary, so no request of ours has
+ * to carry it. A studio with a longer film than this has one worth embedding
+ * from YouTube or Vimeo instead.
+ */
+export const MAX_VIDEO_SIZE_MB = 100;
+
+export const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
 
 /**
  * The three formats the site serves. Anything else — HEIC off a phone, a TIFF,
@@ -69,6 +81,21 @@ export const ALLOWED_IMAGE_ACCEPT = ALLOWED_IMAGE_TYPES.join(",");
 
 /** "JPEG, PNG or WebP" — the line under the drop zone. */
 export const ALLOWED_IMAGE_LABEL = "JPEG, PNG or WebP";
+
+/**
+ * What a film may arrive as. MOV is here because that is what comes off an
+ * iPhone and off most of the cameras a walkthrough is shot on; Cloudinary
+ * transcodes it, so the browser is never asked to play one.
+ */
+export const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"] as const;
+
+/** What Cloudinary calls them, for the signed `allowed_formats` parameter. */
+export const ALLOWED_VIDEO_FORMATS = "mp4,webm,mov";
+
+export const ALLOWED_VIDEO_ACCEPT = ALLOWED_VIDEO_TYPES.join(",");
+
+/** "MP4, WebM or MOV" — the line under a drop zone that takes film. */
+export const ALLOWED_VIDEO_LABEL = "MP4, WebM or MOV";
 
 /**
  * The shortest password the console will open an admin account on. Here rather

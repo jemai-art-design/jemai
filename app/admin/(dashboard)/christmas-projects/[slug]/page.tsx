@@ -6,6 +6,7 @@ import {
   setChristmasProjectVisibilityAction,
 } from "@/app/admin/(dashboard)/christmas-projects/actions";
 import { ContentActionsMenu } from "@/components/admin/content-actions-menu";
+import { MediaThumb } from "@/components/admin/media-thumb";
 import { ProjectVisibilityToggle } from "@/components/admin/project-visibility-toggle";
 import { CopyPanel, DetailRow } from "@/components/admin/record-panels";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -13,10 +14,11 @@ import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getProjectOfKind } from "@/lib/admin/projects";
+import { mediaCount } from "@/lib/project-media";
 
 /**
- * A Christmas project's detail screen: the record on the left, its photography
- * on the right. This is where a create or an edit lands.
+ * A Christmas project's detail screen: the record on the left, its media on
+ * the right. This is where a create or an edit lands.
  */
 const AdminChristmasProjectDetailPage = async ({
   params,
@@ -57,7 +59,7 @@ const AdminChristmasProjectDetailPage = async ({
             <dl className="divide-border-default/60 flex flex-col divide-y">
               <DetailRow label="slug" value={project.slug} />
               <DetailRow label="Setting & season" value={project.meta || "—"} />
-              <DetailRow label="Photographs" value={String(project.images.length)} />
+              <DetailRow label="Media" value={mediaCount(project.media)} />
             </dl>
           </section>
 
@@ -74,9 +76,9 @@ const AdminChristmasProjectDetailPage = async ({
               withLabel
             />
             <p className="text-text-secondary text-xs">
-              {project.images.length
+              {project.media.length
                 ? "A project is drawn on the Christmas styling page while this is on."
-                : "This project has no photography yet, so the carousel leaves it out even while it is on — the card is its first shot."}
+                : "This project has nothing attached yet, so the carousel leaves it out even while it is on — the card is its first photograph or video."}
             </p>
           </section>
 
@@ -95,7 +97,7 @@ const AdminChristmasProjectDetailPage = async ({
       <Card className="ring-border-default py-6">
         <CardHeader>
           <CardTitle className="text-text-primary font-sans text-xl font-semibold">
-            Photography
+            Media
           </CardTitle>
           <div className="col-start-2 row-start-1 justify-self-end">
             <Button
@@ -109,21 +111,23 @@ const AdminChristmasProjectDetailPage = async ({
           </div>
         </CardHeader>
         <CardContent>
+          {/* The grid is the carousel's order, left to right — the first tile is
+              the card. A film and an embed show their still with a play badge,
+              so what plays is legible without opening the edit form. */}
           <ul className="grid grid-cols-3 gap-3">
-            {project.images.length ? (
-              project.images.map((image, index) => (
-                <li key={`${image.src}-${index}`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="bg-surface-subtle aspect-square w-full rounded-md object-cover"
+            {project.media.length ? (
+              project.media.map((entry, index) => (
+                <li key={`${entry.src}-${index}`}>
+                  <MediaThumb
+                    media={entry}
+                    alt={entry.alt}
+                    className="aspect-square w-full"
                   />
                 </li>
               ))
             ) : (
               <li className="text-text-secondary col-span-3 text-sm">
-                No photography yet.
+                Nothing attached yet.
               </li>
             )}
           </ul>

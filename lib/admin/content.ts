@@ -5,6 +5,8 @@
  * rather than from each other.
  */
 
+import { mediaName, type ProjectMediaType } from "@/lib/project-media";
+
 /** A media entry — thumbnail, portrait or gallery slot. `size` is what the uploader reported. */
 export type ContentAsset = {
   id: string;
@@ -12,20 +14,34 @@ export type ContentAsset = {
   /** Bytes, as the picker reported them. Formatted for display, never summed. */
   size: number;
   src: string;
+  /**
+   * What the entry is, where the picker takes more than photographs. Only the
+   * project form does — the catalogue and exhibition pickers produce images and
+   * nothing else — so it is optional and reads as `image` when absent, and a
+   * video-less picker needs no changes to keep working.
+   */
+  type?: ProjectMediaType;
 };
 
 /**
- * The uploader works in `ContentAsset`s, but only their `src` is worth keeping:
- * a record carries one thumbnail and an ordered list of gallery sources on its
- * own row. This turns a stored source back into the shape the picker draws,
- * naming it from the last path segment — a re-opened edit form shows the file
- * name it was uploaded under for a real URL, and a generic one for a data URL.
+ * The uploader works in `ContentAsset`s, but only their `src` and kind are
+ * worth keeping: a record carries one thumbnail and an ordered list of sources
+ * on its own row. This turns a stored source back into the shape the picker
+ * draws, naming it as `mediaName` does — a re-opened edit form shows the file
+ * name a photograph or a film was uploaded under, and the provider and id of an
+ * embed, which has no file name to show.
  */
-export const toContentAsset = (src: string): ContentAsset => ({
+export const toContentAsset = (
+  src: string,
+  type: ProjectMediaType = "image",
+  // Always set here, however `ContentAsset` declares it, so a project form's
+  // values — which require a kind — can be spread straight out of this.
+): ContentAsset & { type: ProjectMediaType; } => ({
   id: src,
-  name: src.startsWith("data:") ? "Uploaded image" : (src.split("/").pop() || src),
+  name: src.startsWith("data:") ? "Uploaded image" : mediaName({ type, src }),
   size: 0,
   src,
+  type,
 });
 
 /** Naira, whole units, hand-grouped so server and client always agree. */

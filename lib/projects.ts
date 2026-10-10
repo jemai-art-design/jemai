@@ -1,16 +1,8 @@
 import { cache } from "react";
 
 import { prisma } from "@/lib/prisma";
+import { toProjectMedia, type ProjectMedia } from "@/lib/project-media";
 import type { ProjectKind } from "@/lib/project-kinds";
-
-/**
- * One photograph of a project. The alt text is authored alongside the upload
- * rather than derived, because a room is not described by its file name.
- */
-export type ProjectImage = {
-  src: string;
-  alt: string;
-};
 
 /** A project as the storefront draws it — no kind, no visibility, no ordering. */
 export type Project = {
@@ -20,17 +12,29 @@ export type Project = {
   meta: string;
   /** The one line under the name. Most projects carry none. */
   summary: string;
-  /** The paragraph the lightbox prints beside the photographs. */
+  /** The paragraph the lightbox prints beside the media. */
   description: string;
-  /** First is the card's shot; the rest are the lightbox's. Never empty here. */
-  images: ProjectImage[];
+  /**
+   * First is the card; the rest are the lightbox's. Photographs, uploaded films
+   * and embeds in one arranged order — see `lib/project-media`. Never empty
+   * here.
+   */
+  media: ProjectMedia[];
 };
+
+/**
+ * A stored list as the pages read it: every entry normalised, and anything
+ * without a source dropped. A Json column cannot be trusted to hold only what
+ * the form last wrote into it, and a card with no source is a dead tile.
+ */
+export const readProjectMedia = (stored: ProjectMedia[] | null) =>
+  (stored ?? []).map(toProjectMedia).filter((media) => Boolean(media.src));
 
 /**
  * One carousel's projects, in the order the console arranged them.
  *
- * A project with no photographs is left out rather than drawn empty: the card
- * is its first shot, so there would be nothing to click. That is the shape a
+ * A project with nothing attached is left out rather than drawn empty: the card
+ * is its first entry, so there would be nothing to click. That is the shape a
  * half-written project is saved in, which is why this filters rather than
  * trusting every visible row to be complete.
  */
@@ -44,11 +48,11 @@ export const listActiveProjects = cache(async (kind: ProjectKind): Promise<Proje
       meta: true,
       summary: true,
       description: true,
-      images: true,
+      media: true,
     },
   });
 
   return records
-    .map((record) => ({ ...record, images: record.images ?? [] }))
-    .filter((project) => project.images.length > 0);
+    .map((record) => ({ ...record, media: readProjectMedia(record.media) }))
+    .filter((project) => project.media.length > 0);
 });

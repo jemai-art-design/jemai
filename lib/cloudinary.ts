@@ -3,10 +3,13 @@ import * as Yup from "yup";
 
 import {
   ALLOWED_IMAGE_FORMATS,
+  ALLOWED_VIDEO_FORMATS,
   CLOUDINARY_FOLDER,
   SITE_IMAGE_FOLDER,
 } from "@/lib/constants";
 import env from "@/lib/env";
+import { projectMediaTypes, videoEmbed, type ProjectMediaType } from "@/lib/project-media";
+import type { SignedVideoUpload } from "@/lib/video-upload";
 
 const CONNECTION = /^cloudinary:\/\/([^:@/]+):([^:@/]+)@([^:@/]+)$/;
 
@@ -64,6 +67,38 @@ export const uploadImage = async (file: File) => {
   });
 };
 
+
+/**
+ * The terms one film may go up on, signed, for the browser to post it directly.
+ *
+ * A photograph is small enough to travel through a server action; a film is
+ * not — see `SignedVideoUpload`. What crosses instead is this: an hour's worth
+ * of permission to write one video into our own folder, in one of our own
+ * formats, and nothing else. The secret never leaves the server, and the
+ * caller checks the admin session before asking for it.
+ */
+export const signVideoUpload = (): SignedVideoUpload => {
+  const { cloudName, apiKey, apiSecret } = credentials();
+  const timestamp = Math.floor(Date.now() / 1000);
+
+  /* Every parameter the browser will send bar the file itself, the api key and
+     the resource type — Cloudinary signs exactly this set, sorted, so the two
+     sides have to agree on it to the character. */
+  const signed = {
+    allowed_formats: ALLOWED_VIDEO_FORMATS,
+    folder: CLOUDINARY_FOLDER,
+    timestamp,
+  };
+
+  return {
+    cloudName,
+    apiKey,
+    timestamp,
+    signature: cloudinary.utils.api_sign_request(signed, apiSecret),
+    folder: signed.folder,
+    allowedFormats: signed.allowed_formats,
+  };
+};
 
 /**
  * Where a static site image lives in the media library — the slot's own path
@@ -196,6 +231,32 @@ export const isAllowedImageSource = (src: string) => {
   );
 };
 
+/**
+ * The same rule for a film, narrowed to the video half of our own cloud.
+ *
+ * Narrower than the image rule in both directions: no root-relative path, since
+ * nothing in `public/` is a film the console put there, and the delivery path
+ * has to be `/video/`, so an image URL cannot be saved as a video entry and
+ * left for the lightbox to try to play.
+ */
+export const isAllowedVideoSource = (src: string) => {
+  let url: URL;
+  try {
+    url = new URL(src);
+  } catch {
+    return false;
+  }
+
+  const cloudName = cloudinaryCloudName();
+
+  return (
+    url.protocol === "https:" &&
+    url.hostname === "res.cloudinary.com" &&
+    Boolean(cloudName) &&
+    url.pathname.startsWith(`/${cloudName}/video/`)
+  );
+};
+
 export const imageAssetSchema = Yup.object({
   src: Yup
     .string()
@@ -206,4 +267,56 @@ export const imageAssetSchema = Yup.object({
       "Images must be uploaded through this form.",
       (value) => !value || isAllowedImageSource(value),
     ),
+});
+
+/**
+ * One entry in a project's media list, checked by what it says it is.
+ *
+ * The three kinds are held to three different rules, which is the whole reason
+ * this cannot be `imageAssetSchema`: an uploaded photograph and an uploaded
+ * film must be on our own cloud, and an embed must be on neither — it is a
+ * YouTube or Vimeo link, so what is checked is that it parses as one. Without
+ * that split, `type: "embed"` would be the way to put any URL on the page.
+ */
+export const projectMediaSchema = Yup.object({
+  type: Yup
+    .string<ProjectMediaType>()
+    .oneOf(projectMediaTypes, "That is not a kind of media this form takes.")
+    .default("image")
+    .required(),
+  src: Yup
+    .string()
+    .trim()
+    .required("Every entry needs a source.")
+    .test({
+      name: "allowed-source",
+      test: (value, context) => {
+        if (!value) return true;
+
+        const { type } = context.parent as { type?: ProjectMediaType; };
+
+        if (type === "embed")
+          return (
+            Boolean(videoEmbed(value)) ||
+            context.createError({
+              message: "A video link must be a YouTube or Vimeo URL.",
+            })
+          );
+
+        if (type === "video")
+          return (
+            isAllowedVideoSource(value) ||
+            context.createError({
+              message: "Videos must be uploaded through this form.",
+            })
+          );
+
+        return (
+          isAllowedImageSource(value) ||
+          context.createError({
+            message: "Images must be uploaded through this form.",
+          })
+        );
+      },
+    }),
 });

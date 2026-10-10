@@ -1,7 +1,8 @@
 import { slugify, uniqueSlug } from "@/lib/admin/content";
 import { prisma } from "@/lib/prisma";
 import type { ProjectKind } from "@/lib/project-kinds";
-import type { Project, ProjectImage } from "@/lib/projects";
+import { videoEmbed, type ProjectMedia } from "@/lib/project-media";
+import { readProjectMedia, type Project } from "@/lib/projects";
 import type {
   Prisma,
   Project as ProjectRecord,
@@ -46,7 +47,7 @@ const toProject = (record: ProjectRecord): AdminProject => ({
   meta: record.meta,
   summary: record.summary,
   description: record.description,
-  images: record.images ?? [],
+  media: readProjectMedia(record.media),
   isActive: record.isActive,
   status: projectStatus(record.isActive),
   position: record.position,
@@ -114,15 +115,21 @@ export type ProjectFormPayload = {
   meta: string;
   summary: string;
   description: string;
-  images: ProjectImage[];
+  media: ProjectMedia[];
   isActive: boolean;
 };
 
 /**
- * A shot saved without alt text falls back to the project's name, so the markup
- * never carries an empty `alt` on a photograph that is the whole point of the
- * card. Shared by both sections rather than written twice — this is the rule
- * that would quietly drift.
+ * An entry saved without alt text falls back to the project's name, so the
+ * markup never carries an empty `alt` on the photograph — or an unnamed player
+ * on the film — that is the whole point of the card. Shared by both sections
+ * rather than written twice; this is the rule that would quietly drift.
+ *
+ * An embed is also stored in one shape rather than in whichever one the link
+ * was copied in. The picker already canonicalises what an author pastes, but an
+ * action is a POST endpoint like any other, so the rule belongs on the write
+ * rather than in the browser — a `youtu.be` short link and a watch URL for the
+ * same video must not become two different rows.
  */
 export const toProjectInput = (
   kind: ProjectKind,
@@ -134,9 +141,10 @@ export const toProjectInput = (
   meta: values.meta,
   summary: values.summary,
   description: values.description,
-  images: values.images.map((image) => ({
-    src: image.src,
-    alt: image.alt || values.name,
+  media: values.media.map((entry) => ({
+    type: entry.type,
+    src: entry.type === "embed" ? (videoEmbed(entry.src)?.src ?? entry.src) : entry.src,
+    alt: entry.alt || values.name,
   })),
   isActive: values.isActive,
 });
@@ -165,7 +173,7 @@ const columns = (input: ProjectInput) => ({
   meta: input.meta,
   summary: input.summary,
   description: input.description,
-  images: input.images,
+  media: input.media,
   isActive: input.isActive,
 });
 

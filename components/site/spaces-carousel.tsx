@@ -4,7 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  ProjectMediaFrame,
+  ProjectPoster,
+} from "@/components/site/project-media";
 import { cn } from "@/lib/utils";
+import { mediaNoun } from "@/lib/project-media";
 import type { Project } from "@/lib/projects";
 import {
   Dialog,
@@ -34,10 +39,11 @@ export const SpacesCarousel = ({
   const activeThumbRef = useRef<HTMLButtonElement>(null);
   const [progress, setProgress] = useState(0);
   const [active, setActive] = useState<Project | null>(null);
-  /** Which of the open project's shots the lightbox is showing. */
+  /** Which of the open project's entries the lightbox is showing. */
   const [shot, setShot] = useState(0);
 
-  const shots = active?.images ?? [];
+  /** Photographs, films and embeds in the order the console arranged them. */
+  const shots = active?.media ?? [];
   const goShot = (delta: number) =>
     setShot((i) => (i + delta + shots.length) % shots.length);
 
@@ -102,12 +108,13 @@ export const SpacesCarousel = ({
                 className="group flex w-full cursor-pointer flex-col gap-2.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 <div className="relative aspect-square w-full overflow-hidden bg-[#e9e6de]">
-                  <Image
-                    src={project.images[0].src}
-                    alt={project.images[0].alt}
-                    fill
+                  {/* A project led by a film shows its opening frame here and
+                      plays in the lightbox — the card is a still either way, so
+                      a rail of six is six pictures rather than six videos. */}
+                  <ProjectPoster
+                    media={project.media[0]}
                     sizes="(min-width: 640px) 330px, 280px"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
                 <p className="text-eyebrow-lg text-text-secondary pt-2.5 uppercase">
@@ -161,22 +168,19 @@ export const SpacesCarousel = ({
           overlayClassName="bg-surface-inverse/94"
           onKeyDown={(event) => {
             if (shots.length < 2) return;
+            // Left and right belong to a focused player — they seek it — so the
+            // strip only takes them when the focus is elsewhere in the dialog.
+            if ((event.target as HTMLElement).closest("video")) return;
             if (event.key === "ArrowLeft") { event.preventDefault(); goShot(-1); }
             if (event.key === "ArrowRight") { event.preventDefault(); goShot(1); }
           }}
           className="flex max-h-[calc(100dvh-3rem)] w-[min(1240px,calc(100vw-2rem))] max-w-none flex-col gap-8 overflow-y-auto sm:w-[min(1240px,calc(100vw-4rem))] lg:flex-row lg:items-center lg:gap-14 lg:overflow-visible"
         >
           <div className="relative aspect-4/3 w-full shrink-0 border border-white/15 max-lg:max-h-[45dvh] lg:flex-1">
-            {shots[shot] && (
-              <Image
-                key={shot}
-                src={shots[shot].src}
-                alt={shots[shot].alt}
-                fill
-                sizes="(min-width: 1024px) 60vw, 100vw"
-                className="animate-in fade-in object-cover duration-300"
-              />
-            )}
+            {/* Keyed on the position rather than re-pointed: stepping along the
+                strip unmounts the player, which is what stops a film carrying on
+                behind the next photograph. */}
+            {shots[shot] && <ProjectMediaFrame key={shot} media={shots[shot]} />}
 
             {shots.length > 1 && (
               <>
@@ -189,7 +193,7 @@ export const SpacesCarousel = ({
                     type="button"
                     variant="quiet"
                     onClick={() => goShot(delta)}
-                    aria-label={`${direction} photograph`}
+                    aria-label={`${direction} ${mediaNoun(shots[shot].type)}`}
                     className={cn(
                       "bg-surface-page text-icon-primary absolute top-1/2 size-12.5 -translate-y-1/2 rounded-full hover:bg-white",
                       side,
@@ -242,28 +246,26 @@ export const SpacesCarousel = ({
                 ref={stripRef}
                 className="mt-8 flex gap-2.5 overflow-x-auto pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden"
               >
-                {shots.map((image, index) => (
+                {shots.map((entry, index) => (
                   <Button
-                    key={`${image.src}-${index}`}
+                    key={`${entry.src}-${index}`}
                     ref={index === shot ? activeThumbRef : undefined}
                     type="button"
                     variant="quiet"
-                    aria-label={`Photograph ${index + 1} of ${shots.length}`}
+                    aria-label={`${entry.type === "image" ? "Photograph" : "Video"} ${index + 1} of ${shots.length}`}
                     aria-current={index === shot}
                     onClick={() => setShot(index)}
                     className={cn(
-                      "relative size-16 shrink-0 rounded-none p-0 transition-opacity",
+                      "relative size-16 shrink-0 overflow-hidden rounded-none p-0 transition-opacity",
                       index === shot
                         ? "opacity-100"
                         : "opacity-45 hover:opacity-80",
                     )}
                   >
-                    <Image
-                      src={image.src}
-                      alt=""
-                      fill
+                    <ProjectPoster
+                      media={{ ...entry, alt: "" }}
                       sizes="64px"
-                      className="object-cover"
+                      badgeClassName="size-6"
                     />
                   </Button>
                 ))}

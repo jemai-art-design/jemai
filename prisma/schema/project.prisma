@@ -29,11 +29,18 @@ model Project {
   /// The paragraph the lightbox prints beside the photographs.
   description String @db.Text
 
-  /// `[{ src, alt }]` in the order the lightbox walks them — the first is the
-  /// shot the card draws. Each needs its own alt text, which is why these are
+  /// `[{ type, src, alt }]` in the order the lightbox walks them — the first is
+  /// what the card draws. Each needs its own alt text, which is why these are
   /// objects rather than the bare source list the catalogue stores.
-  /// [ProjectImages]
-  images Json @default("[]")
+  ///
+  /// Three kinds of entry share the list: an `image`, a `video` uploaded to our
+  /// own cloud, and an `embed` playing from YouTube or Vimeo. One list rather
+  /// than three because the order is the whole point of it — a separate video
+  /// column would mean deciding somewhere else how the two interleave. Nothing
+  /// else about an entry is stored: its poster frame, its player URL and its
+  /// name are all read off `type` and `src` by `lib/project-media`.
+  /// [ProjectMediaList]
+  media Json @default("[]")
 
   /// Off until the studio turns it on. A hidden project is still edited and
   /// still holds its slug; it simply draws nothing on the storefront.

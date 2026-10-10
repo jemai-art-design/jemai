@@ -23,9 +23,9 @@ const AdminDesignProjectEditPage = async ({
     meta: project.meta,
     summary: project.summary,
     description: project.description,
-    images: project.images.map((image) => ({
-      ...toContentAsset(image.src),
-      alt: image.alt,
+    media: project.media.map((entry) => ({
+      ...toContentAsset(entry.src, entry.type),
+      alt: entry.alt,
     })),
     isActive: project.isActive,
   };

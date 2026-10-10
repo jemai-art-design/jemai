@@ -24,11 +24,21 @@ const nextConfig: NextConfig = {
   },
   allowedDevOrigins: ['192.168.1.114'],
   images: {
-    remotePatterns: cloudNames.map((cloudName) => ({
-      protocol: "https" as const,
-      hostname: "res.cloudinary.com",
-      pathname: `/${cloudName}/**`,
-    })),
+    remotePatterns: [
+      ...cloudNames.map((cloudName) => ({
+        protocol: "https" as const,
+        hostname: "res.cloudinary.com",
+        pathname: `/${cloudName}/**`,
+      })),
+      // A project may embed a video from YouTube rather than upload it, and the
+      // still a card draws for one is published here — the only path on the
+      // host, and the only way to show an embed without an API key per video.
+      {
+        protocol: "https" as const,
+        hostname: "i.ytimg.com",
+        pathname: "/vi/**",
+      },
+    ],
   },
 };
 

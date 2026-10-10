@@ -14,6 +14,7 @@ import {
   FormSection,
   fieldChrome,
 } from "@/components/admin/form-section";
+import { MediaThumb } from "@/components/admin/media-thumb";
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,16 +23,24 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActionResult } from "@/lib/action-result";
 import { slugify, type ContentAsset } from "@/lib/admin/content";
-import { MAX_PROJECT_IMAGES } from "@/lib/constants";
+import { MAX_PROJECT_MEDIA } from "@/lib/constants";
 import { projectKindDetails, type ProjectKind } from "@/lib/project-kinds";
+import type { ProjectMediaType } from "@/lib/project-media";
 import { cn } from "@/lib/utils";
 
 /**
- * An uploaded shot plus the alt text written for it. The picker works in bare
- * `ContentAsset`s, so the alt lives alongside and is carried back across every
- * reorder by `id` — see `onImages`.
+ * One entry — a photograph, an uploaded film or an embed — plus the alt text
+ * written for it. The picker works in bare `ContentAsset`s, so the alt lives
+ * alongside and is carried back across every reorder by `id` — see `onMedia`.
  */
-export type ProjectAssetValues = ContentAsset & { alt: string; };
+export type ProjectAssetValues = Omit<ContentAsset, "type"> & {
+  /**
+   * Required here, optional on `ContentAsset`: the picker sets it on everything
+   * it produces, and a form value with no kind is one the save cannot place.
+   */
+  type: ProjectMediaType;
+  alt: string;
+};
 
 export type ProjectFormValues = {
   name: string;
@@ -39,7 +48,7 @@ export type ProjectFormValues = {
   meta: string;
   summary: string;
   description: string;
-  images: ProjectAssetValues[];
+  media: ProjectAssetValues[];
   isActive: boolean;
 };
 
@@ -49,7 +58,7 @@ export const emptyProjectForm: ProjectFormValues = {
   meta: "",
   summary: "",
   description: "",
-  images: [],
+  media: [],
   // A new project starts hidden: it is written up over several sittings, and
   // nothing half-finished should appear on the site in the meantime.
   isActive: false,
@@ -99,21 +108,22 @@ export const ProjectForm = ({
     defaultValues: project ?? emptyProjectForm,
   });
 
-  const images = useWatch({ control, name: "images" });
+  const media = useWatch({ control, name: "media" });
   const isActive = useWatch({ control, name: "isActive" });
 
   /**
    * The picker hands back `ContentAsset`s — it adds, removes and reorders them
    * but knows nothing about alt text. Each row's alt is looked back up by `id`,
-   * so dragging a shot up the list takes its caption with it, and a shot just
-   * uploaded starts without one.
+   * so dragging an entry up the list takes its caption with it, and one just
+   * added starts without one.
    */
-  const onImages = (next: ContentAsset[]) =>
+  const onMedia = (next: ContentAsset[]) =>
     setValue(
-      "images",
+      "media",
       next.map((asset) => ({
         ...asset,
-        alt: images.find((held) => held.id === asset.id)?.alt ?? "",
+        type: asset.type ?? "image",
+        alt: media.find((held) => held.id === asset.id)?.alt ?? "",
       })),
       { shouldValidate: true },
     );
@@ -254,7 +264,7 @@ export const ProjectForm = ({
             <FormSection
               value="description"
               title="Project description"
-              description="The paragraph the lightbox prints beside the photographs."
+              description="The paragraph the lightbox prints beside the media."
             >
               <Textarea
                 id="description"
@@ -265,42 +275,41 @@ export const ProjectForm = ({
             </FormSection>
 
             <FormSection
-              value="images"
-              title="Photography"
-              description="The first shot is the card. Drag to reorder — the lightbox walks them in this order."
+              value="media"
+              title="Media"
+              description="Photographs and video together. The first is the card — drag to reorder, and the lightbox walks them in this order."
             >
               <FileDrop
-                label="Project photography"
+                label="Project media"
                 multiple
                 reorderable
-                max={MAX_PROJECT_IMAGES}
-                assets={images}
-                onChange={onImages}
+                allowVideo
+                max={MAX_PROJECT_MEDIA}
+                assets={media}
+                onChange={onMedia}
               />
 
-              {/* Alt text per shot, beside the row it describes. A room is not
+              {/* Alt text per entry, beside the row it describes. A room is not
                   described by its file name, so it is written rather than
                   derived — and a blank one falls back to the project's name on
-                  save instead of reaching the page empty. */}
-              {images.length ? (
+                  save instead of reaching the page empty. On a film it is the
+                  name a screen reader announces the player by. */}
+              {media.length ? (
                 <div className="mt-6 flex flex-col gap-4">
                   <FieldLabel>Alt text</FieldLabel>
-                  {images.map((image, index) => (
-                    <div key={image.id} className="flex items-center gap-3">
-                      {/* A Cloudinary URL at 40px, one per shot — a plain img
-                          rather than that many optimiser round trips. */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={image.src}
-                        alt=""
-                        className="bg-surface-subtle size-10 shrink-0 rounded-md object-cover"
-                      />
+                  {media.map((entry, index) => (
+                    <div key={entry.id} className="flex items-center gap-3">
+                      <MediaThumb media={entry} className="size-10" />
                       <Input
-                        value={image.alt}
-                        placeholder={`Shot ${index + 1} — e.g. “Living area at ${details.namePlaceholder}”`}
-                        aria-label={`Alt text for ${image.name}`}
+                        value={entry.alt}
+                        placeholder={
+                          entry.type === "image"
+                            ? `Shot ${index + 1} — e.g. “Living area at ${details.namePlaceholder}”`
+                            : `Video ${index + 1} — e.g. “Walkthrough of ${details.namePlaceholder}”`
+                        }
+                        aria-label={`Alt text for ${entry.name}`}
                         onChange={(event) =>
-                          setValue(`images.${index}.alt`, event.target.value, {
+                          setValue(`media.${index}.alt`, event.target.value, {
                             shouldValidate: true,
                           })
                         }
@@ -332,7 +341,7 @@ export const ProjectForm = ({
               <FieldHint>
                 {isActive
                   ? `It appears on ${details.shownOn} as soon as this is saved.`
-                  : "It stays in the console only. Turn this on when the write-up and the photography are ready."}
+                  : "It stays in the console only. Turn this on when the write-up and the media are ready."}
               </FieldHint>
             </FormSection>
           </Accordion>

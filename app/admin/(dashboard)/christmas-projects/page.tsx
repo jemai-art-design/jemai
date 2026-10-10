@@ -8,6 +8,7 @@ import {
 } from "@/components/admin/project-table";
 import { Button } from "@/components/ui/button";
 import { listProjects, projectStatuses } from "@/lib/admin/projects";
+import { mediaCount } from "@/lib/project-media";
 import { param, paramOneOf } from "@/lib/admin/table-query";
 
 /**
@@ -27,7 +28,7 @@ const AdminChristmasProjectsPage = async ({
     slug: project.slug,
     name: project.name,
     meta: project.meta,
-    images: project.images.length,
+    media: mediaCount(project.media),
     isActive: project.isActive,
     status: project.status,
   }));

@@ -1,5 +1,5 @@
 import type { ChristmasStatus as Status, RequestedArea } from "@/lib/christmas";
-import type { ProjectImage } from "@/lib/projects";
+import type { ProjectMedia } from "@/lib/project-media";
 import type { ProjectKind as Kind } from "@/lib/project-kinds";
 import type { SiteImage } from "@/lib/site-image-slots";
 
@@ -16,7 +16,7 @@ declare global {
   namespace PrismaJson {
     type ChristmasAreas = RequestedArea[];
     type ChristmasStatus = Status;
-    type ProjectImages = ProjectImage[];
+    type ProjectMediaList = ProjectMedia[];
     type ProjectKind = Kind;
     type SiteImages = SiteImage[];
   }

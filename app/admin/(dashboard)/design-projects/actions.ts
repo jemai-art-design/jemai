@@ -13,7 +13,7 @@ import {
   toProjectInput,
   updateProject,
 } from "@/lib/admin/projects";
-import { imageAssetSchema } from "@/lib/cloudinary";
+import { projectMediaSchema } from "@/lib/cloudinary";
 
 const requireProjectAccess = async (): Promise<ActionResult<string>> => {
   const session = await readActiveAdmin();
@@ -31,14 +31,14 @@ const projectPayload = () =>
     summary: Yup.string().trim().default(""),
     description: Yup.string().trim().default(""),
     /**
-     * The photographs, each with its own alt text. The list may be empty — a
+     * The media, each entry with its own alt text. The list may be empty — a
      * project is written up over several sittings, and one still short of its
      * photography is saved rather than refused. It simply draws nothing on the
-     * site until it has a first shot, visible or not.
+     * site until it has a first entry, visible or not.
      */
-    images: Yup
+    media: Yup
       .array(
-        imageAssetSchema.shape({
+        projectMediaSchema.shape({
           alt: Yup.string().trim().default(""),
         }),
       )

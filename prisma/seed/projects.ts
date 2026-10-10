@@ -1,12 +1,13 @@
 import { prisma } from "../../lib/prisma";
-import type { ProjectImage } from "../../lib/projects";
+import type { ProjectMedia } from "../../lib/project-media";
 
 type Seed = {
   slug: string;
   name: string;
   meta: string;
   description?: string;
-  images: ProjectImage[];
+  /** Photographs only — the six seeded projects predate video entirely. */
+  images: Omit<ProjectMedia, "type">[];
 };
 
 /**
@@ -155,7 +156,9 @@ export const seedProjects = async () => {
       // None of the six carried a summary; the card lets the photograph speak.
       summary: "",
       description: project.description ?? "",
-      images: project.images,
+      // Every seeded entry is a photograph, so the media list is the same
+      // sources under the key that now tells the three kinds apart.
+      media: project.images.map((image) => ({ type: "image" as const, ...image })),
       // Every one of these is on the site today, so they arrive showing.
       isActive: true,
       position,

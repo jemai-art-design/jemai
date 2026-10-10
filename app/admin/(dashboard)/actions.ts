@@ -2,9 +2,10 @@
 
 import { fail, failWith, ok, type ActionResult } from "@/lib/action-result";
 import { readActiveAdmin } from "@/lib/admin/auth/session";
-import { uploadImage } from "@/lib/cloudinary";
+import { signVideoUpload, uploadImage } from "@/lib/cloudinary";
 import { ALLOWED_IMAGE_LABEL, MAX_IMAGE_SIZE_MB } from "@/lib/constants";
 import { imageFileValidation } from "@/lib/image-upload";
+import type { SignedVideoUpload } from "@/lib/video-upload";
 
 /**
  * The upload every picker in the console posts to. It serves the whole
@@ -40,5 +41,32 @@ export const uploadImageAction = async (
     return ok(await uploadImage(file));
   } catch (error) {
     return failWith("Could not upload that image. Try again.", error);
+  }
+};
+
+/**
+ * An hour's permission to put one film on our own cloud, which the picker then
+ * posts the bytes to directly.
+ *
+ * A film does not come through the action above. A server action is a POST to
+ * this app, and a 100MB body is refused outright by most of what serves one —
+ * so what crosses is the signature rather than the film. The session check is
+ * the whole of the authorisation: a signature handed to a signed-out browser is
+ * a write into the studio's media library.
+ *
+ * What may be written is fixed in `signVideoUpload` and sealed by the
+ * signature, so a browser holding one still cannot choose the folder, the
+ * format or the resource type.
+ */
+export const signVideoUploadAction = async (): Promise<
+  ActionResult<SignedVideoUpload>
+> => {
+  const session = await readActiveAdmin();
+  if (!session) return fail("Your session has expired. Sign in again.");
+
+  try {
+    return ok(signVideoUpload());
+  } catch (error) {
+    return failWith("Video uploads are not configured. Tell your developer.", error);
   }
 };

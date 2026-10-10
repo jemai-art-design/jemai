@@ -36,8 +36,12 @@ export type ProjectRow = {
   name: string;
   /** "Residential · Lagos". */
   meta: string;
-  /** How many photographs are attached, which is all this screen says of them. */
-  images: number;
+  /**
+   * "12 photographs · 2 videos" — how much is attached, which is all this screen
+   * says of it. Counted on the server by `mediaCount`, since the sources
+   * themselves never cross to the client.
+   */
+  media: string;
   isActive: boolean;
   status: ProjectStatus;
 };
@@ -157,7 +161,7 @@ export const ProjectTable = ({
                     Discipline &amp; location
                   </TableHead>
                   <TableHead className="text-text-secondary h-12 pr-6 pl-0 text-sm font-normal">
-                    Photographs
+                    Media
                   </TableHead>
                   <TableHead className="text-text-secondary h-12 pr-6 pl-0 text-sm font-normal">
                     Status
@@ -185,7 +189,7 @@ export const ProjectTable = ({
                       {row.meta || "—"}
                     </TableCell>
                     <TableCell className="text-text-primary py-4 pr-6 pl-0 text-sm">
-                      {row.images}
+                      {row.media}
                     </TableCell>
                     <TableCell className="py-4 pr-6 pl-0">
                       <StatusBadge status={row.status} />
