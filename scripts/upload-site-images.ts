@@ -67,54 +67,71 @@ const writeMap = async (hosted: Hosted) => {
 };
 
 /**
- * Moves the console's saved locations off `public/` and onto the cloud.
+ * Brings the console's saved locations up to date with the cloud.
  *
- * A row is a copy of what a location was showing when somebody pressed Save, so
- * one saved before the first upload holds repository paths — and because a
- * location with a row never consults its defaults, re-seeding the registry does
- * not reach it. Only the `src` is touched: the alt text and the fit are the
- * studio's work.
+ * A row is a copy of what a location was showing when somebody pressed Save,
+ * and three separate things make that copy wrong: a repository path, saved
+ * before the first upload ever ran; a URL on a cloud the site has since left;
+ * and the version string an earlier run wrote, since the ids are deterministic,
+ * so a re-upload keeps the path and changes only the version. All three read
+ * the same way from here — the cloud holds a different URL for that key than
+ * the row does — so one pass repairs all three.
  *
- * A key with no hosted picture behind it is left alone and named. That is a
- * picture the registry does not ship, which has no file in `public/` to have
- * been uploaded — it should not be possible, and guessing at it is worse than
- * saying so.
+ * It has to be a pass of its own because a location with a row never consults
+ * its defaults, so re-seeding the registry does not reach it. `home.hero` is
+ * the case that shows why: it is an open carousel, so the stored list is the
+ * author's arrangement and is taken verbatim, and a stale row there outlives
+ * any number of `--force` runs while the map beside it is perfectly current.
+ *
+ * Only the `src` is touched: the alt text and the fit are the studio's work.
  */
 const relinkOverrides = async (hosted: Hosted) => {
   const rows = await prisma.siteImageSlot.findMany({
     select: { slot: true, images: true },
   });
 
-  const stale = rows.filter((row) =>
-    row.images.some((image) => image.src.startsWith("/")),
+  /**
+   * What the cloud now holds for a saved picture, when that is not already
+   * what the row is showing.
+   *
+   * A key the map does not hold is left alone rather than named: that is a
+   * picture the studio added through the console, which has no shipped default
+   * behind it and was never this script's to place.
+   */
+  const moveTo = (slot: string, key: string, src: string) => {
+    const url = hosted[`${slot}/${key}`];
+    return url && url !== src ? url : null;
+  };
+
+  /**
+   * A saved repository path with nothing in the cloud behind it — a picture
+   * the registry does not ship, so no file in `public/` was ever uploaded for
+   * it. It should not be possible, and guessing at it is worse than saying so.
+   */
+  const orphans = rows.flatMap((row) =>
+    row.images
+      .filter(
+        (image) => image.src.startsWith("/") && !hosted[`${row.slot}/${image.key}`],
+      )
+      .map((image) => `${row.slot}/${image.key} (${image.src})`),
   );
 
-  if (!stale.length) {
-    console.log(
-      rows.length
-        ? `\n${rows.length} saved ${rows.length === 1 ? "location" : "locations"}, none pointing at the repository`
-        : "\nNo saved locations to re-point",
-    );
-    return;
-  }
+  const stale = rows.filter((row) =>
+    row.images.some((image) => moveTo(row.slot, image.key, image.src)),
+  );
 
   console.log(
-    `\n${stale.length} saved ${stale.length === 1 ? "location" : "locations"} still pointing at the repository:`,
+    stale.length
+      ? `\n${stale.length} saved ${stale.length === 1 ? "location" : "locations"} out of date with the cloud:`
+      : rows.length
+        ? `\n${rows.length} saved ${rows.length === 1 ? "location" : "locations"}, all current`
+        : "\nNo saved locations to re-point",
   );
-
-  const orphans: string[] = [];
 
   for (const row of stale) {
     const images = row.images.map((image) => {
-      if (!image.src.startsWith("/")) return image;
-
-      const url = hosted[`${row.slot}/${image.key}`];
-      if (!url) {
-        orphans.push(`${row.slot}/${image.key} (${image.src})`);
-        return image;
-      }
-
-      return { ...image, src: url };
+      const url = moveTo(row.slot, image.key, image.src);
+      return url ? { ...image, src: url } : image;
     });
 
     const moved = images.filter((image, index) => image.src !== row.images[index].src).length;
