@@ -13,7 +13,7 @@ type ArchitectureSectionProps = {
 };
 
 export const ArchitectureSection = async ({
-  eyebrow = "05 / JEMAI Designs",
+  eyebrow = "02 / JEMAI Designs",
   heading = "Spaces Shaped by Purpose, Personality and Space",
   copy = "From private homes to public spaces, discover environments shaped around the people, purpose and possibilities within them.",
   variant = "section",

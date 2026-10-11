@@ -177,12 +177,6 @@ export const shippedSiteImageSlots: SiteImageSlotMeta[] = [
         fit: "cover",
       },
       {
-        key: "furniture",
-        src: "/figma/home/cat-furniture.jpg",
-        alt: "A seating group arranged around a low table",
-        fit: "cover",
-      },
-      {
         key: "art",
         src: "/figma/home/cat-artworks.jpg",
         alt: "A framed work on a gallery wall",
@@ -192,6 +186,12 @@ export const shippedSiteImageSlots: SiteImageSlotMeta[] = [
         key: "exhibitions",
         src: "/figma/home/cat-exhibitions.jpg",
         alt: "Visitors in a gallery room during an exhibition",
+        fit: "cover",
+      },
+      {
+        key: "furniture",
+        src: "/figma/home/cat-furniture.jpg",
+        alt: "A seating group arranged around a low table",
         fit: "cover",
       },
     ],

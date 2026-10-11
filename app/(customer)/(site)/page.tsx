@@ -22,10 +22,10 @@ const HomePage = async () => {
   return (
     <>
       <IntroSection />
-      <FurnitureSection products={products} />
+      <ArchitectureSection />
       <ArtworksSection />
       <ExhibitionsSection upNext={upNext} />
-      <ArchitectureSection />
+      <FurnitureSection products={products} />
     </>
   );
 };
