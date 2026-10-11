@@ -30,9 +30,8 @@ export const UpNext = ({ exhibition }: { exhibition: UpNextExhibition; }) => (
             {exhibition.rows.map((row, index) => (
               <div
                 key={row.label}
-                className={`border-border-default flex gap-4 border-t py-3 ${
-                  index === exhibition.rows.length - 1 ? "border-b-0" : ""
-                }`}
+                className={`border-border-default flex gap-4 border-t py-3 ${index === exhibition.rows.length - 1 ? "border-b-0" : ""
+                  }`}
               >
                 <dt className="text-body text-text-secondary w-25.75 shrink-0">
                   {row.label}
@@ -73,7 +72,7 @@ export const UpNext = ({ exhibition }: { exhibition: UpNextExhibition; }) => (
               fill
               priority
               sizes="(min-width: 1024px) 688px, 100vw"
-              className="object-cover"
+              className="object-contain"
             />
           </div>
         </div>

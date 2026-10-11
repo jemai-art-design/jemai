@@ -14,7 +14,7 @@ const defaultAssurances: Assurance[] = [
   {
     icon: <Image src="/figma/icons/delivery.svg" alt="" width={48} height={48} unoptimized />,
     title: "Free Shipping",
-    copy: "All orders over ₦1,818,510 are delivered to your doorstep at no extra charge.",
+    copy: "All orders over ₦7,500,000 are delivered to your doorstep at no extra charge.",
     cta: { label: "Shipping Details", href: "/terms" },
   },
   {

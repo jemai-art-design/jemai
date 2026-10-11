@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArtistNote } from "@/components/exhibitions/artist-note";
 import { ExhibitionIntro } from "@/components/exhibitions/exhibition-intro";
@@ -47,8 +46,6 @@ const PastExhibitionPage = async ({
 
   const [before, after] = [exhibition.body.slice(0, 2), exhibition.body.slice(2)];
 
-  const [featured] = exhibition.works;
-
   return (
     <div className="flex w-full flex-col">
       <ExhibitionIntro exhibition={exhibition} />
@@ -62,20 +59,6 @@ const PastExhibitionPage = async ({
       {before.length ? (
         <div className="mt-12.25">
           <Narrative paragraphs={before} />
-        </div>
-      ) : null}
-
-      {featured ? (
-        <div className="mt-5.75 w-full px-4 sm:px-6 lg:px-page-gutter">
-          <div className="relative mx-auto aspect-900/720 w-full max-w-225">
-            <Image
-              src={featured.src}
-              alt={featured.alt}
-              fill
-              sizes="(min-width: 1024px) 900px, 100vw"
-              className="object-cover"
-            />
-          </div>
         </div>
       ) : null}
 

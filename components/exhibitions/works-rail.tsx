@@ -28,7 +28,7 @@ export const WorksRail = ({ works }: { works: ExhibitionWork[]; }) => (
               alt={work.alt}
               fill
               sizes="(min-width: 1024px) 300px, 50vw"
-              className="object-cover"
+              className="object-contain"
             />
           </div>
           <p className="text-body-sm text-text-primary mt-2.75">

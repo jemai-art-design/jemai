@@ -31,9 +31,8 @@ export const ArtistPanel = ({
   controls?: ReactNode;
 }) => (
   <div
-    className={`grid gap-8 ${
-      note.portrait ? "lg:grid-cols-[576fr_563fr] lg:gap-x-20.25" : ""
-    }`}
+    className={`grid gap-8 ${note.portrait ? "lg:grid-cols-[576fr_563fr] lg:gap-x-20.25" : ""
+      }`}
   >
     {note.portrait ? (
       <div
@@ -45,7 +44,7 @@ export const ArtistPanel = ({
           alt={note.portrait.alt}
           fill
           sizes="(min-width: 1024px) 576px, 100vw"
-          className="object-cover"
+          className="object-contain"
         />
       </div>
     ) : null}

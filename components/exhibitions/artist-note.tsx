@@ -21,8 +21,6 @@ export const ArtistNote = ({ notes }: { notes: Note[]; }) => {
   return (
     <section className="w-full px-4 sm:px-6 lg:px-page-gutter">
       <div className="mx-auto w-full max-w-432">
-        {/* 576 + 81 + 563 = 1220, so the block sits on the gutter and stops 92px
-            short of it on the right — as drawn. */}
         <div className="flex w-full max-w-305 flex-col gap-10">
           <h2 className="font-heading text-text-primary text-2xl sm:text-h3">
             {notes.length > 1 ? "About the Artists" : "About the Artist"}
